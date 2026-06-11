@@ -1,0 +1,82 @@
+W projekcie commity piszemy w języku angielskim
+
+PL Zasady tworzenia commitów
+1. Typy
+- chore: zmiany utrzymaniowe, aktualizacja zależności, konfiguracji lub inne zadania niewpływające bezpośrednio na funkcjonalność aplikacji
+- docs:  - zmiany wyłącznie w dokumentacji
+- feat:  - dodanie nowej funkcjonalności
+- fix:   - poprawka błędu
+- refactor:  - zmiana w kodzie, która nie dodaje nowej funkcjonalności ani nie naprawia błędu
+- style:  - zmiany nie wpływające na działanie kodu (formatowanie, białe znaki, brakujące średniki itp.)
+- test:  - dodanie nowych testów lub poprawa istniejących
+- perf:  - zmiana poprawiająca wydajność
+Przykład
+    docs: update changelog to beta.5
+
+
+2. Tytuł commita
+- używać trybu rozkazującego i czasu teraźniejszego (np. „add”, „fix”, „update”, a nie „added”, „fixed”, „updates”)
+- zaczynać małą literą
+- nie kończyć kropką
+Przykład
+    fix: fix login validation 
+    feat: add user profile endpoint 
+    refactor: simplify authentication flow 
+    style: remove unused imports
+
+
+3. Opis commita
+- używać trybu rozkazującego i czasu teraźniejszego
+- wyjaśniać powód wprowadzenia zmiany
+- opisywać różnicę między poprzednim a nowym zachowaniem
+- dostarczać dodatkowego kontekstu, jeśli jest potrzebny
+Przykład
+    Subject:
+        fix: prevent invalid login attempts
+
+    Body:
+        Prevent users from bypassing login validation when submitting
+        empty credentials.
+        Previously the application accepted requests with missing
+        username and password values. Reject such requests and return
+        a validation error before authentication starts.
+
+
+
+
+EN Commits rules
+1. Types
+- docs:  - Documentation only changes
+- feat:  - A new feature
+- fix:   - A bug fix
+- refactor:  - A code change that neither fixes a bug nor adds a feature
+- style:  - Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- test:  - Adding missing tests or correcting existing tests
+- perf:  - A code change that improves performance
+Example 
+    docs: update changelog to beta.5
+
+
+2. Subject (Tytul)
+- use the imperative, present tense: "change" not "changed" nor "changes"
+- don't capitalize the first letter
+- no dot (.) at the end
+Example
+    fix: fix login validation
+    feat: add user profile endpoint
+    chore: remove unused imports
+
+
+3. Body:
+Just as in the subject, use the imperative, present tense: "change" not "changed" nor "changes". 
+The body should include the motivation for the change and contrast this with previous behavior.
+Example
+    Subject:
+        fix: prevent invalid login attempts
+
+    Body:
+        Prevent users from bypassing login validation when submitting
+        empty credentials.
+        Previously the application accepted requests with missing
+        username and password values. Reject such requests and return
+        a validation error before authentication starts.
