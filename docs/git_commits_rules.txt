@@ -1,4 +1,10 @@
-W projekcie commity piszemy w języku angielskim
+ZASADY: 
+- W projekcie commity piszemy w języku angielskim.
+- Każda zmiana = osobny branch (np. feature/login, chore/setup-project)
+- Trzymamy sie poniższych zasad tworzenia commitów
+
+
+
 
 PL Zasady tworzenia commitów
 1. Typy
@@ -46,6 +52,7 @@ Przykład
 
 EN Commits rules
 1. Types
+- chore: Changes that do not affect application logic or user-facing functionality. Includes maintenance tasks, dependency updates, configuration changes, and tooling updates.
 - docs:  - Documentation only changes
 - feat:  - A new feature
 - fix:   - A bug fix
