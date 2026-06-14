@@ -1,6 +1,9 @@
 from datetime import datetime
 from app.models import db, Ostrzezenie, Zdjecie
 from flask import Flask
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 def add_fake_data():
     ostrzezenia_data = [
@@ -74,7 +77,7 @@ def add_fake_data():
 
 if __name__ == "__main__":
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost:3306/eatsafe_db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
