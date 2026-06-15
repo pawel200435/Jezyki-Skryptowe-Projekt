@@ -28,18 +28,18 @@
                 <nav class="sidebar w-100 h-100 d-flex flex-column align-items-center p-0 pt-1">
                     <div class="text-center p-2 mb-3 w-100"><i class="fa-solid fa-bars fa-3x"></i></div>
 
-                    <button class="btn-navbar p-2 mb-5 w-100" title="Informacje"><i class="fa-solid fa-info fa-2x "></i></button>
+                    <button class="btn-navbar p-2 mb-5 w-100" title="Informacje" data-bs-toggle="modal" data-bs-target="#infoModal"><i class="fa-solid fa-info fa-2x "></i></button>
 
                     <button class="btn-navbar btn-navbar-active p-2 mb-5 w-100" title="Zagrożenia"><i class="fa-solid fa-triangle-exclamation fa-2x"></i></button>
 
-                    <button class="btn-navbar p-2 w-100" title="Newsletter"><i class="fa-solid fa-envelope fa-2x"></i></button>
+                    <button class="btn-navbar p-2 w-100" title="Newsletter" data-bs-toggle="modal" data-bs-target="#newsletterModal"><i class="fa-solid fa-envelope fa-2x"></i></button>
                 </nav>
             </div>
 
             <div class="col h-100 w-100 d-flex flex-column bg-light">
                 <header class="topbar d-flex justify-content-between px-3 py-1 border-bottom border-black">
                     <div class="logo">
-                        <h1 class="m-0 logo-text">
+                        <h1 class="m-0 logo-text d-flex align-items-center justify-content-center gap-2">
                             <img src="{{ url_for('static', filename='img/icon.webp') }}" width="64" height="64" alt="logo"> Eat<span style="color: #70C1B3">Safe</span>
                         </h1>
                     </div>
@@ -103,13 +103,18 @@
         </div>
     </div>
 
+
+    <!-- modals -->
+    {% include 'partials/info_modal.html' %}
+    {% include 'partials/newsletter_modal.html' %}
+
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
     <script>
         // script for sort and filter poopovers from bootstrap
         document.addEventListener("DOMContentLoaded", function(){
-            let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+            let popoverTriggerList = [...document.querySelectorAll('[data-bs-toggle="popover"]')]
             
             let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             let contentSelector = popoverTriggerEl.getAttribute('data-popover-content');
@@ -117,7 +122,7 @@
             // setting poopover bootstrap options
             let popoverOptions = {
                 html: true,
-                sanitize: false,
+                sanitize: false, // turn off html filtering
             };
 
             if (contentSelector) {
