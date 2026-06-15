@@ -1,0 +1,31 @@
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+        <!-- background-color z Twojej makiety -->
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header pt-0 pb-0 border-bottom border-black">
+                <h4 class="modal-title fw-semibold fs-1 mb-2" id="infoModalLabel">
+                    <i class="fa-solid fa-info p-2 fa-sm"></i> Informacje
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body text-center pt-2 pb-4 px-4">
+                <div class="mb-3">
+                    <h2 class="m-0 logo-text d-flex align-items-center justify-content-center gap-2">
+                            <img src="{{ url_for('static', filename='img/icon.webp') }}" width="64" height="64" alt="logo" class="mr-2"> Eat<span style="color: #70C1B3">Safe</span>
+                    </h2>
+                </div>
+                <p class="fw-medium text-dark text-justify" style="font-size: 0.95rem;">
+                    Główny Inspektorat Sanitarny (GIS) regularnie publikuje ostrzeżenia o wycofanych produktach (np. z powodu bakterii, alergenów czy ciał obcych). Nasza aplikacja automatycznie pobiera te komunikaty, oczyszcza surowe dane i prezentuje je w jednym, wygodnym miejscu
+                </p>
+                <h5 class="fw-bold mt-4 mb-3">Co oferuje EatSafe?</h5>
+                <ul class="list-unstyled mb-4 text-start">
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> <strong>Szybki wgląd:</strong> Przeglądaj najnowsze zagrożenia z podziałem na numer partii i termin przydatności.</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> <strong>Inteligentne filtry:</strong> Wyszukuj produkty po nazwie, producencie lub rodzaju zagrożenia.</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> <strong>Powiadomienia:</strong> Zapisz się do newslettera, by otrzymywać alerty bezpośrednio na maila.</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> <strong>Eksport danych:</strong> Generuj raporty do plików zewnętrznych.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

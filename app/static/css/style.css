@@ -27,3 +27,11 @@
 .main-background {
     background-color: #F8FFD7;
 }
+
+.modal-content {
+    background-color: #F5BB00;
+}
+
+.popover {
+    z-index: 1040 !important;
+}
