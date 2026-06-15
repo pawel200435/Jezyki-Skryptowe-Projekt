@@ -112,12 +112,25 @@ Additional GIS-related official channels (to be integrated later) may include go
 
 ---
 
-## 🚧 Project Status
+## Setup and Running
+```
+1. Run MySQL (open XAMPP Control Panel and start Apache and MySQL modules)
+2. Open your browser and navigate to: http://localhost/phpmyadmin.
+3. Click on the New tab (on the left panel) and create a blank database named: eatsafe_db
 
-This project is currently in the **initial setup phase**:
-- architecture design
-- technology selection
-- repository setup
+4. Ensure you have a .env file in the root directory of the project with the correct connection string (default XAMPP user is root with an empty password)
+  .env file content:
+  DATABASE_URL=mysql+pymysql://root:@localhost:3306/eatsafe_db
+
+5. Create and activate venv
+6. Install required packages: uv pip install -r requirements.txt
+
+7. Generate database tables by running: 
+  python create_db.py
+8. Seed the database with test data
+  python add_fake_data.py
+
+```
 
 ---
 
