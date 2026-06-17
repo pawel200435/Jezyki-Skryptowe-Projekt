@@ -57,3 +57,21 @@
     background-color: #FF1654;
     border: 1px solid #FF1654;
 }
+
+.background-blue {
+    color: #ffffff;
+    background-color: #247BA0;
+    border: 1px solid #247BA0;
+}
+
+.background-red {
+    color: #ffffff;
+    background-color: #FF1654;
+    border: 1px solid #FF1654;
+}
+
+.background-green {
+    color: #000000;
+    background-color: #70c1b4dc;
+    border: 1px solid #70c1b4dc;
+}
