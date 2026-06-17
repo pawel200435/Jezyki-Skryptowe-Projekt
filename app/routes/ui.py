@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, request
 from app.models import Ostrzezenie
+import re
 
 ui_bp = Blueprint('ui', __name__)
+
+def is_valid_email(email):
+    email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$' # test@test.com
+    return re.match(email_pattern, email) is not None
 
 @ui_bp.route('/')
 def index():
@@ -30,3 +35,31 @@ def search_alerts():
         filtered_alerts = Ostrzezenie.query.order_by(Ostrzezenie.data_publikacji.desc()).limit(10).all()
     
     return render_template('partials/search_results.html', alerts=filtered_alerts)
+
+@ui_bp.route('/ui/newsletter/subscribe', methods=['POST'])
+def subscirbe():
+    email = request.form.get('email').strip()
+    
+    if not email or not is_valid_email(email):
+        return render_template('partials/email_alert.html', 
+                               alert_type="red", 
+                               message="Podano niepoprawny adres e-mail!")
+    
+    #TD: function which adds email to database
+    return render_template('partials/email_alert.html', 
+                               alert_type="green", 
+                               message=f'Dodano adress do newslettera')
+    
+@ui_bp.route('/ui/newsletter/unsubscribe', methods=['POST'])
+def unsubscirbe():
+    email = request.form.get('email').strip()
+    
+    if not email or not is_valid_email(email):
+        return render_template('partials/email_alert.html', 
+                               alert_type="red", 
+                               message="Podano niepoprawny adres e-mail!")
+    
+    #TD: function which removes email to database
+    return render_template('partials/email_alert.html', 
+                               alert_type="blue", 
+                               message=f'Wypisano adres z newslettera')

@@ -35,3 +35,43 @@
 .popover {
     z-index: 1040 !important;
 }
+
+.btn-outline-blue {
+    color: #247BA0;
+    border: 1px solid #247BA0;
+}
+
+.btn-outline-blue:hover {
+    color: #ffffff;
+    background-color: #247BA0;
+    border: 1px solid #247BA0;
+}
+
+.btn-outline-red {
+    color: #FF1654;
+    border: 1px solid #FF1654;
+}
+
+.btn-outline-red:hover {
+    color: #ffffff;
+    background-color: #FF1654;
+    border: 1px solid #FF1654;
+}
+
+.background-blue {
+    color: #ffffff;
+    background-color: #247BA0;
+    border: 1px solid #247BA0;
+}
+
+.background-red {
+    color: #ffffff;
+    background-color: #FF1654;
+    border: 1px solid #FF1654;
+}
+
+.background-green {
+    color: #000000;
+    background-color: #70c1b4dc;
+    border: 1px solid #70c1b4dc;
+}
