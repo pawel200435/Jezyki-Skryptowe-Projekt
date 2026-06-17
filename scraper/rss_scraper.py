@@ -2,7 +2,7 @@ import feedparser
 from datetime import datetime
 from time import mktime
 from bs4 import BeautifulSoup
-import extractor
+from . import extractor
 
 def scrape_latest_rss_warnings(url="https://rss.mtsz.pl/gis-ostrzezenia.xml"):
     feed = feedparser.parse(url, agent="EatSafe-App/1.0")
