@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from app.models import Warning, Product
+from app.models import db, Warning, Product, Subscriber
 import re
 
 ui_bp = Blueprint('ui', __name__)
@@ -45,7 +45,13 @@ def subscirbe():
                                alert_type="red", 
                                message="Podano niepoprawny adres e-mail!")
     
-    #TD: function which adds email to database
+    #function which adds email to database
+    new_sub = Subscriber(
+        email=email
+    )
+    db.session.add(new_sub)
+    db.session.commit()
+
     return render_template('partials/email_alert.html', 
                                alert_type="green", 
                                message=f'Dodano adress do newslettera')
@@ -59,7 +65,13 @@ def unsubscirbe():
                                alert_type="red", 
                                message="Podano niepoprawny adres e-mail!")
     
-    #TD: function which removes email to database
+    #function which deactivate subscriber
+    subscriber = Subscriber.query.filter_by(email = email).first()
+    if subscriber:
+        subscriber.is_active = False
+    db.session.commit()
+
+
     return render_template('partials/email_alert.html', 
                                alert_type="blue", 
-                               message=f'Wypisano adres z newslettera')
+                               message=f'Anulowano subskrypcje')
