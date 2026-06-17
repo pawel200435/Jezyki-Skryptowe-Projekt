@@ -6,24 +6,29 @@
                     <span class="badge bg-danger px-2 py-1.5 fw-semibold text-uppercase">Ostrzeżenie GIS</span>
                     <small class="text-muted">
                         <i class="fa-solid fa-calendar-days me-1"></i>
-                        {{ alert.data_publikacji.strftime('%Y-%m-%d') if alert.data_publikacji else 'Brak daty' }}
+                        {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else 'Brak daty' }}
                     </small>
                 </div>
                 
-                <h4 class="card-title fw-bold text-dark mb-1">{{ alert.produkt }}</h4>
-                <h6 class="card-subtitle mb-3 text-secondary">Marka: <span class="fw-semibold">{{ alert.marka if alert.marka else 'N/A' }}</span></h6>
-                
+                {% for product in alert.products %}
+                    <div class="mb-3">
+                        <h4 class="card-title fw-bold text-dark mb-1">{{ product.product_name }}</h4>
+                        <p class="card-text text-muted m-0 small">
+                            <strong class="text-dark">Numer partii:</strong> {{ product.batch }}
+                        </p>
+                    </div>
+                {% endfor %}
+
+                <h6 class="card-subtitle mb-3 text-secondary">Marka: <span class="fw-semibold">{{ alert.brand if alert.brand else 'N/A' }}</span></h6>
+
                 <p class="card-text text-muted mb-2">
-                    <strong class="text-dark">Zagrożenie:</strong> {{ alert.zagrozenie }}
+                    <strong class="text-dark">Zagrożenie:</strong> {{ alert.danger }}
                 </p>
                 
-                <p class="card-text text-muted mb-3 small">
-                    <strong class="text-dark">Numer partii:</strong> {{ alert.numer_partii }}
-                </p>
                 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                     <span class="small text-truncate me-2 text-muted" style="max-width: 70%;">
-                        <i class="fa-solid fa-industry me-1"></i> {{ alert.producent }}
+                        <i class="fa-solid fa-industry me-1"></i> TERAZ NIE MA POLA PRDUCENT
                     </span>
                     <a href="{{ alert.link_zrodlowy }}" target="_blank" class="btn btn-sm btn-outline-dark fw-semibold px-3">
                         Szczegóły <i class="fa-solid fa-arrow-up-right-from-square ms-1 small"></i>
