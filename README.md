@@ -127,8 +127,8 @@ Additional GIS-related official channels (to be integrated later) may include go
 
 7. Generate database tables by running: 
   python create_db.py
-8. Seed the database with test data
-  python add_fake_data.py
+8. Seed the database with RSS data:
+  python sync_rss.py
 
 ```
 
