@@ -75,3 +75,11 @@
     background-color: #70c1b4dc;
     border: 1px solid #70c1b4dc;
 }
+
+.text-red {
+    color: #FF1654;
+}
+
+.alert-table {
+    table-layout: fixed;
+}
