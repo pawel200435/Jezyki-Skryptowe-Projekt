@@ -87,7 +87,7 @@
                                        name="q"
                                        hx-get="/search" 
                                        hx-trigger="keyup changed delay:500ms" 
-                                       hx-target="#lista-wynikow">
+                                       hx-target="#result-list">
                             </div>
                         </div>
                     </div>
@@ -100,7 +100,7 @@
                         {% include 'partials/filter_popover.html' %}
                     </div>
 
-                    <div id="lista-wynikow" class="p-3 flex-grow-1 overflow-auto">
+                    <div id="result-list" class="p-3 flex-grow-1 overflow-auto">
                         {% include 'partials/search_results.html' %}
                     </div>
                 </main>
