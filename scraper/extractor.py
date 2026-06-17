@@ -2,13 +2,15 @@ from bs4 import BeautifulSoup, NavigableString
 
 # this data extractor module seems to work fine for the rss feed part
 # obviously it will change when the gov data get imported
-def parse_data_from_html(html_content):
+def extract(html_content):
 
     result={
         'danger': "",
         'product' : set(),
         'brand':"",
         'recommendations':"",
+        'cleared_html':"",
+        'images':set(),
     }
 
     soup = BeautifulSoup(html_content, "html.parser")
@@ -104,6 +106,34 @@ def parse_data_from_html(html_content):
     result['danger']=find_in_h3("Zagrożenie", soup)
     result['recommendations']=find_in_h3("Zalecenia", soup)
 
+    # we separate the gallery section to extract image links
+    gallery_section = soup.find("div", class_="gallery")
+
+    if gallery_section:
+        images = gallery_section.find_all("img", src=True)
+        # a set of tuples, first argument being imgs description, and second one being the link
+        # also small check - GIS always includes their graphic, and it always ends in 1920x810
+        img_urls = {(tag.get('alt', ""), tag['src']) for tag in images if "resolution/1920x810" not in tag['src']}
+        # we can destroy this section since we've already extracted our urls
+        gallery_section.decompose()
+    else:
+        img_urls = []
+
+    # There is always a small header telling the reader how many photos are there in the gallery
+    # We must get rid of it
+    photos_header = soup.find("h3", string=lambda t: t and "Zdjęcia" in t)
+    if photos_header:
+        photos_header.decompose()
+
+    # also checking for text which is hidden in reader-view only
+    for hidden_text in soup.find_all(class_="sr-only"):
+        hidden_text.decompose()
+
+    # clearing the html
+    cleared_html = soup.get_text(separator="\n", strip=True)
+
+    result['cleared_html'] = cleared_html
+    result['images']=img_urls
 
     return result
 
@@ -126,3 +156,17 @@ def find_in_h3(word:str, soup):
                 return paragraph.get_text(strip=True, separator=" ")
 
     return None
+
+def check_missing(data):
+    for d in data:
+        key_list = d.keys()
+        # check for missing keys
+        missing_data = [key for key in key_list if not d.get(key)]
+        print(f"Title: {d.get('title')}")
+        if missing_data:
+            print("missing data:")
+            for i in missing_data:
+                print(i)
+        else:
+            print("all data extracted successfully")
+        print("=================================================\n\n")
