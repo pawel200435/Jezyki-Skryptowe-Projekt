@@ -77,7 +77,7 @@ def unsubscirbe():
                                message=f'Anulowano subskrypcje')
     
 @ui_bp.route('/ui/export', methods=['POST'])
-def export_alerts():
+def export_warnings():
     selected_ids = request.form.getlist('alert_ids')
     
     warnings =  Warning.query.filter(Warning.wID.in_(selected_ids)).all()
