@@ -56,7 +56,10 @@
                 <main class="main-background flex-grow-1 d-flex flex-column overflow-hidden">
                     <div class="d-flex justify-content-between align-items-center m-2">
                         <div class="">
-                            <button type="button" class="btn btn-light fs-5">
+                            <button type="button" class="btn btn-light fs-5"
+                            hx-post="/ui/export"
+                            hx-include="#result-list"
+                            >
                                 <i class="fa-solid fa-arrow-up-from-bracket fa-lg me-2"></i>
                                 Eksport
                             </button>
@@ -100,7 +103,7 @@
                         {% include 'partials/filter_popover.html' %}
                     </div>
 
-                    <div id="result-list" class="p-3 flex-grow-1 overflow-auto">
+                    <div id="result-list" class="flex-grow-1 overflow-auto ps-2 pb-2">
                         {% include 'partials/search_results.html' %}
                     </div>
                 </main>

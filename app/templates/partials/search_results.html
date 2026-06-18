@@ -1,46 +1,111 @@
 {% if alerts %}
-    {% for alert in alerts %}
-        <div class="card mb-3 shadow-sm border-0 animate-fade-in">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge bg-danger px-2 py-1.5 fw-semibold text-uppercase">Ostrzeżenie GIS</span>
-                    <small class="text-muted">
-                        <i class="fa-solid fa-calendar-days me-1"></i>
-                        {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else 'Brak daty' }}
-                    </small>
-                </div>
-                
-                {% for product in alert.products %}
-                    <div class="mb-3">
-                        <h4 class="card-title fw-bold text-dark mb-1">{{ product.product_name }}</h4>
-                        <p class="card-text text-muted m-0 small">
-                            <strong class="text-dark">Numer partii:</strong> {{ product.batch }}
-                        </p>
+    <table class="table table-hover shadow-sm align-middle bg-white w-100 m-0">
+        <thead class="position-sticky top-0 bg-white border-bottom-2 border-black shadow-sm">
+            <tr class="border-bottom-2 border-black bg-white align-middle">
+                <th class="text-center" style="width: 3%;">
+                    <input class="form-check-input m-0" type="checkbox" id="selectAllCheckboxes" title="Zaznacz wszystkie">
+                </th>
+                <th scope="col" style="width: 10%;">Zdjęcie</th>
+                <th scope="col" style="width: 27%;">Dotyczy (Produkt + Partia)</th>
+                <th scope="col" style="width: 20%;">Producent</th>
+                <th scope="col" style="width: 25%;">Zagrożenie</th>
+                <th scope="col" style="width: 10%;">Data komunikatu</th>
+                <th scope="col" style="width: 5%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr>
+                <!-- checkbox -->
+                <td class="text-center">
+                    <input class="form-check-input alert-checkbox" type="checkbox" value="{{ alert.wID }}" name="alert_ids">
+                </td>
+
+                <!-- image -->
+                <td>
+                    <!-- checking if there are relation and length is > 0-->
+                    {% if alert.images and alert.images|length > 0 %}
+                        <img src="{{ alert.images[0].img_url }}" alt="{{ alert.images[0].alt_desc }}" class="img-thumbnail" style="width: 86px; height: 86px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light text-muted border d-flex justify-content-center align-items-center rounded" style="width: 86px; height: 86px;">
+                            -
+                        </div>
+                    {% endif %}
+                </td>
+
+                <!-- products -->
+                <td>
+                    <!-- checking like in images -->
+                    {% if alert.products and alert.products|length > 0 %}
+                        <!-- taking 1st product only -->
+                        <div class="fw-bold text-dark">{{ alert.products[0].product_name }}</div>
+                        <div class="text-muted">Partia: {{ alert.products[0].batch }}</div>
+                        
+                        <!-- if are more products in alert show badge -->
+                        {% if alert.products|length > 1 %}
+                            <span class="badge background-blue mt-1 fw-medium">
+                                + {{ alert.products|length - 1 }} inne produkty
+                            </span>
+                        {% endif %}
+                        
+                    {% else %}
+                        <div class="fw-bold text-dark">{{ alert.title }}</div>
+                        <div class="text-muted small">Brak przypisanych produktów</div>
+                    {% endif %}
+                </td>
+
+                <!-- brand -->
+                <td>
+                    <div title="{{ alert.brand }}" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ alert.brand if alert.brand else '-'}} 
                     </div>
-                {% endfor %}
+                </td>
 
-                <h6 class="card-subtitle mb-3 text-secondary">Marka: <span class="fw-semibold">{{ alert.brand if alert.brand else 'N/A' }}</span></h6>
+                <!-- danger -->
+                <td>
+                    <div class="text-red" title="{{ alert.danger }}" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ alert.danger if alert.danger else '-'}}
+                    </div>
+                </td>
 
-                <p class="card-text text-muted mb-2">
-                    <strong class="text-dark">Zagrożenie:</strong> {{ alert.danger }}
-                </p>
-                
-                
-                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                    <span class="small text-truncate me-2 text-muted">
-                        <i class="fa-solid fa-industry me-1"></i> TERAZ NIE MA POLA PRDUCENT
-                    </span>
-                    <a href="{{ alert.link_zrodlowy }}" target="_blank" class="btn btn-sm btn-outline-dark fw-semibold px-3">
-                        Szczegóły <i class="fa-solid fa-arrow-up-right-from-square ms-1 small"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+                <!-- publication_date-->
+                <td>
+                    {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else '-' }}
+                </td>
+
+                <td class="text-center">
+                    <button class="btn btn-outline-blue btn-sm fw-bold px-3">Info</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% else %}
-    {# Display empty block if no records match the query #}
-    <div class="text-center py-5 my-4">
-        <i class="fa-solid fa-magnifying-glass fa-3x mb-3 text-muted text-opacity-50"></i>
-        <p class="fs-5 text-secondary m-0">Nie znaleziono żadnych ostrzeżeń spełniających kryteria.</p>
-    </div>
+    <p class="fs-3 text-center text-secondary">Brak ostrzeżeń o podanych parametrach</p>
 {% endif %}
+
+<script>
+    document.body.addEventListener('change', function(event) {
+    
+        // check/uncheck all
+        if (event.target.id === 'selectAllCheckboxes') {
+            const isChecked = event.target.checked;
+            const checkboxes = document.querySelectorAll('.alert-checkbox');
+            
+            checkboxes.forEach(el => {
+                el.checked = isChecked;
+            });
+        }
+        
+        // if user uncheck one element the th checkbox need to be uncheck too 
+        if (event.target.classList.contains('alert-checkbox')) {
+            const allCheckboxes = document.querySelectorAll('.alert-checkbox');
+            const allChecked = Array.from(allCheckboxes).every(el => el.checked);
+            
+            const selectAllCb = document.getElementById('selectAllCheckboxes');
+            if (selectAllCb) {
+                selectAllCb.checked = allChecked;
+            }
+        }
+    });
+</script>
