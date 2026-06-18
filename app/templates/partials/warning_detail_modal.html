@@ -40,7 +40,7 @@
                 {% if warning.products %}
                     <ul class="list-group mb-4 shadow-sm ">
                         {% for product in warning.products %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center background-light-yellow border-black">
+                            <li class="list-group-item d-flex flex-lg-row flex-column gap-1 justify-content-between background-light-yellow border-black">
                                 <div>
                                     <span class="fw-bold">{{ product.product_name }}</span>
                                 </div>
@@ -68,7 +68,7 @@
                         <i class="fa-solid fa-camera me-2"></i> Zdjęcia produktu:
                     </h6>
                     
-                    <div id="productImagesCarousel" class="carousel slide rounded shadow-sm border p-2" data-bs-theme="dark">
+                    <div id="productImagesCarousel" class="carousel slide rounded shadow-sm border" data-bs-theme="dark">
                         
                         {% if warning.images|length > 1 %}
                             <div class="carousel-indicators">
