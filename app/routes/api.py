@@ -36,3 +36,20 @@ def add_subscriber():
         return jsonify({'error': 'Email already exists in the database'}), 409
 
     return jsonify({'message': f'Email {email} successfully added to newsletter'}), 201
+
+@api_bp.route('/subscribers/<string:email>', methods=['DELETE'])
+def delete_subscriber(email):
+    """
+    Handles a DELETE request that permanently removes an email address from the subscribers table.
+    The email address is provided as a URL path parameter.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    subscriber = Subscriber.query.filter_by(email=email).first()
+
+    if not subscriber:
+        return jsonify({'error': f'Email {email} not found in the database'}), 404
+
+    db.session.delete(subscriber)
+    db.session.commit()
+
+    return jsonify({'message': f'Email {email} successfully removed from newsletter'}), 200
