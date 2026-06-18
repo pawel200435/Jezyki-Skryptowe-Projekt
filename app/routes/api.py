@@ -53,3 +53,36 @@ def delete_subscriber(email):
     db.session.commit()
 
     return jsonify({'message': f'Email {email} successfully removed from newsletter'}), 200
+
+@api_bp.route('/subscribers/<string:email>', methods=['PUT'])
+def update_subscriber(email):
+    """
+    Handles a PUT request that updates an existing email address in the subscribers table.
+    The current email address is provided as a URL path parameter.
+    Expects a JSON body with a 'new_email' field.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    data = request.get_json()
+
+    if not data or 'new_email' not in data:
+        return jsonify({'error': 'New email is required'}), 400
+
+    new_email = data.get('new_email').strip()
+
+    if not new_email or not is_valid_email(new_email):
+        return jsonify({'error': 'Invalid email address'}), 400
+
+    subscriber = Subscriber.query.filter_by(email=email).first()
+
+    if not subscriber:
+        return jsonify({'error': f'Email {email} not found in the database'}), 404
+
+    subscriber.email = new_email
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Email already exists in the database'}), 409
+
+    return jsonify({'message': f'Email successfully updated from {email} to {new_email}'}), 200
