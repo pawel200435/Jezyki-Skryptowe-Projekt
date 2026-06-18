@@ -9,6 +9,25 @@ def is_valid_email(email):
     email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$' # test@test.com
     return re.match(email_pattern, email) is not None
 
+def warning_to_dict(warning):
+    return {
+        'id': warning.wID,
+        'title': warning.title,
+        'link': warning.link,
+        'publication_date': warning.publication_date.isoformat() if warning.publication_date else None,
+        'danger': warning.danger,
+        'brand': warning.brand,
+        'recommendations': warning.recommendations,
+        'products': [
+            {'name': p.product_name, 'batch': p.batch}
+            for p in warning.products
+        ],
+        'images': [
+            {'url': i.img_url, 'alt': i.alt_desc}
+            for i in warning.images
+        ]
+    }
+
 @api_bp.route('/subscribers', methods=['POST'])
 def add_subscriber():
     """
@@ -86,3 +105,14 @@ def update_subscriber(email):
         return jsonify({'error': 'Email already exists in the database'}), 409
 
     return jsonify({'message': f'Email successfully updated from {email} to {new_email}'}), 200
+
+@api_bp.route('/ostrzezenia', methods=['GET'])
+def get_alerts():
+    """
+    Handles a GET request that returns all alerts from the database in JSON format.
+    Results are sorted by publication date descending (newest first).
+    Returns a JSON array of all warning records.
+    """
+    alerts = Warning.query.order_by(Warning.publication_date.desc()).all()
+
+    return jsonify([warning_to_dict(alert) for alert in alerts]), 200
