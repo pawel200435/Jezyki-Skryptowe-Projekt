@@ -75,3 +75,13 @@ def unsubscirbe():
     return render_template('partials/email_alert.html', 
                                alert_type="blue", 
                                message=f'Anulowano subskrypcje')
+    
+@ui_bp.route('/ui/export', methods=['POST'])
+def export_alerts():
+    selected_ids = request.form.getlist('alert_ids')
+    
+    warnings =  Warning.query.filter(Warning.wID.in_(selected_ids)).all()
+    
+    #TD: IMPLEMENTS FUNCIONS WHICH EXPORTS WARNINGS TO CSV/JSON FILE
+    
+    return
