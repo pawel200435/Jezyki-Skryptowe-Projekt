@@ -205,21 +205,22 @@
             }
 
             // toast notification logic
-            if (event.detail.target.id === "toastPlacement") {
-                // get toast which are not showed
-                let newToast = event.detail.target.querySelector('.toast:not(.show)');
-                
-                //if there any new toast show them for 10 sec
-                if (newToast) {
-                    let toast = new bootstrap.Toast(newToast, { delay: 10000});
-                    toast.show()
+            // get toasts which are not showed
+            let newToasts = document.querySelectorAll('.toast:not(.toast-initialized)');
 
-                    //when new toasts will hide remove them
-                    newToast.addEventListener('hidden.bs.toast', function () {
-                        newToast.remove();
-                    });
-                }
-            }
+            newToasts.forEach((toastEl) => {
+                // initialize toast elem
+                toastEl.classList.add('toast-initialized');
+
+                // retrun new bootstrap toast and show it for 10 sec
+                let toast = new bootstrap.Toast(toastEl, {delay: 10000});
+                toast.show()
+
+                // romve toast from html if is hidden
+                toastEl.addEventListener('hidden.bs.toast', () => {
+                    toastEl.remove();
+                });
+            })
         });
     </script>
 </body>
