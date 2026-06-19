@@ -84,7 +84,7 @@ def export_warnings():
     
     #TD: IMPLEMENTS FUNCIONS WHICH EXPORTS WARNINGS TO CSV/JSON FILE
     
-    return
+    return render_template('partials/toast_success.html', notification = {'message': 'Poprawnie wyeksportowano zaznaczone dane'})
 
 @ui_bp.route('/ui/warning/<int:warning_id>')
 def get_warining_details(warning_id):
