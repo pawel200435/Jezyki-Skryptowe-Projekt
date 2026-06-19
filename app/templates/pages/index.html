@@ -107,19 +107,21 @@
                 </main>
             </div>
         </div>
-
-        <!-- toasts notification div -->
-        <div class="toast-container p-3 overflow-hidden h-100 position-absolute top-0 end-0 m-0 p-0">
-            <div id="toastPlacement" class="d-flex flex-column gap-2 p-2">
-                
-            </div>
     </div>
 
 
     <!-- modals -->
-    <div id="warning-detail-modal-container"></div>
-    {% include 'partials/info_modal.html' %}
-    {% include 'partials/newsletter_modal.html' %}
+    <div class='z-2'>
+        <div id="warning-detail-modal-container"></div>
+        {% include 'partials/info_modal.html' %}
+        {% include 'partials/newsletter_modal.html' %}
+    </div>
+    <!-- toasts -->
+    <div class="toast-container p-3 overflow-hidden h-100 position-absolute top-0 end-0 m-0 p-0 z-1">
+        <div id="toastPlacement" class="d-flex flex-column gap-2 p-2">
+            
+        </div>
+    </div>
 
     
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
