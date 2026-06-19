@@ -46,11 +46,17 @@ def subscirbe():
                                alert_type="red", 
                                message="Podano niepoprawny adres e-mail!")
     
-    #function which adds email to database
-    new_sub = Subscriber(
-        email=email
-    )
-    db.session.add(new_sub)
+    #checking if subsciber exist and reactivate him
+    subscriber = Subscriber.query.filter_by(email = email).first()
+    if subscriber:
+        subscriber.is_active = True
+
+    else:
+        #function which adds email to database
+        new_sub = Subscriber(
+            email=email
+        )
+        db.session.add(new_sub)
     db.session.commit()
 
     return render_template('partials/email_alert.html', 
