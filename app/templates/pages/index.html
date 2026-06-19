@@ -29,11 +29,11 @@
 
                     <div class="text-center p-2 mb-3 w-100"><i class="fa-solid fa-bars fa-3x"></i></div>
 
-                    <button class="btn-navbar p-2 mb-5 w-100" title="Informacje" data-bs-toggle="modal" data-bs-target="#infoModal"><i class="fa-solid fa-info fa-2x "></i></button>
+                    <button class="btn-navbar p-2 mb-5 w-100" title="Informacje" data-bs-toggle="modal" id="nav-btn-info" data-bs-target="#infoModal"><i class="fa-solid fa-info fa-2x "></i></button>
 
-                    <button class="btn-navbar btn-navbar-active p-2 mb-5 w-100" title="Zagrożenia"><i class="fa-solid fa-triangle-exclamation fa-2x"></i></button>
+                    <button class="btn-navbar btn-navbar-active p-2 mb-5 w-100" title="Zagrożenia" id="nav-btn-warnings"><i class="fa-solid fa-triangle-exclamation fa-2x"></i></button>
 
-                    <button class="btn-navbar p-2 w-100" title="Newsletter" data-bs-toggle="modal" data-bs-target="#newsletterModal"><i class="fa-solid fa-envelope fa-2x"></i></button>
+                    <button class="btn-navbar p-2 w-100" title="Newsletter" data-bs-toggle="modal" id="nav-btn-news"  data-bs-target="#newsletterModal"><i class="fa-solid fa-envelope fa-2x"></i></button>
                 </nav>
             </div>
 
@@ -123,6 +123,25 @@
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
     <script>
+        //CONST ELEMENTS
+        // navbar modals buttons 
+        const btnInfo = document.getElementById('nav-btn-info');
+        const btnAlerts = document.getElementById('nav-btn-warnings');
+        const btnNews = document.getElementById('nav-btn-news');
+
+        // navbar modals
+        const infoModal = document.getElementById('infoModal');
+        const newsModal = document.getElementById('newsletterModal');
+
+        //HELP FUNCIONS
+        const resetNavbar = () => {
+                btnInfo.classList.remove('btn-navbar-active');
+                btnNews.classList.remove('btn-navbar-active');
+                btnAlerts.classList.add('btn-navbar-active');
+            }
+
+        //EVENT LISTENERS
+
         // script for sort and filter poopovers from bootstrap
         document.addEventListener("DOMContentLoaded", function(){
             let popoverTriggerList = [...document.querySelectorAll('[data-bs-toggle="popover"]')]
@@ -148,11 +167,36 @@
 
         // provides when user click info button from warning detail modal will shows up 
         document.body.addEventListener("htmx:afterSwap", function(event) {
-            // Jeśli podmieniliśmy zawartość naszego pojemnika na modale...
+            // if new modal was swaped
             if (event.detail.target.id === "warning-detail-modal-container") {
-                // Znajdź nowy modal i pokaż go na ekranie!
+                // get modal and show it
                 let newModal = new bootstrap.Modal(document.getElementById('alertDetailModal'));
                 newModal.show();
+            }
+        });
+
+        //nabar active button class show implementation
+        document.addEventListener("DOMContentLoaded", function() {
+            // listening info modal
+            if (infoModal) {
+                // listener when info modal will open (bootstrap event)
+                infoModal.addEventListener('show.bs.modal', function() {
+                    btnAlerts.classList.remove('btn-navbar-active');
+                    btnInfo.classList.add('btn-navbar-active');
+                });
+                // listener when modal will hide
+                infoModal.addEventListener('hidden.bs.modal', resetNavbar);
+            }
+
+            // listening newsletter modal
+            if (newsModal) {
+                // listener when newsletter modal will open (bootstrap event)
+                newsModal.addEventListener('show.bs.modal', function() {
+                    btnAlerts.classList.remove('btn-navbar-active');
+                    btnNews.classList.add('btn-navbar-active');
+                });
+                // listener when modal will hide
+                newsModal.addEventListener('hidden.bs.modal', resetNavbar);
             }
         });
     </script>
