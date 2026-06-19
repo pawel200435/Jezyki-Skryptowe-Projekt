@@ -3,7 +3,7 @@
         Ostatnia aktualizacja: {{ last_sync }}
     </span>
     
-    <button hx-post="/refresh" 
+    <button hx-post="/ui/refresh" 
             hx-target="#sync-status" 
             hx-swap="outerHTML" 
             onclick="this.innerHTML='<i class=\'fa-solid fa-spinner fa-spin me-1\'></i> Odświeżanie...'; this.disabled=true;"

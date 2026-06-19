@@ -84,6 +84,8 @@ def export_warnings():
     warnings =  Warning.query.filter(Warning.wID.in_(selected_ids)).all()
     
     #TD: IMPLEMENTS FUNCIONS WHICH EXPORTS WARNINGS TO CSV/JSON FILE
+    # this commented return is for excpetion while export failure
+    # return render_template('partials/toast_failure.html', notification = {'message': 'Wystąpił błąd przy eksporcie danych'})
     
     return render_template('partials/toast_success.html', notification = {'message': 'Poprawnie wyeksportowano zaznaczone dane'})
 
@@ -97,11 +99,23 @@ def get_warining_details(warning_id):
         
     return render_template('partials/warning_detail_modal.html', warning=warning)
 
-@ui_bp.route('/refresh', methods=['POST'])
+@ui_bp.route('/ui/refresh', methods=['POST'])
 def refresh_data():
     """
     Triggers the RSS sync script and returns the updated timestamp button.
     """
     sync_warnings_to_db()
     current_time = datetime.now().strftime('%H:%M')
-    return render_template('partials/sync_button.html', last_sync=current_time)
+    
+    sync_button_html = render_template('partials/sync_button.html', last_sync=current_time)
+    
+    toast_html = render_template('partials/toast_success.html', 
+                                 notification={'message': 'Zaktualizowano ostrzeżenia GIS'}, oob=True)
+    
+    return sync_button_html + toast_html
+
+@ui_bp.route('/ui/load-more', methods=['GET'])
+def load_more():
+    
+    return render_template('partials/toast_success.html', 
+                                 notification={'message': 'Załadowano dodatkowe ostrzeżenia'})
