@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from app.models import db
 # improt blueprints
 from app.routes.ui import ui_bp
+from app.routes.api import api_bp
 
 def create_app():
     """
@@ -29,5 +30,6 @@ def create_app():
     db.init_app(app) 
     # Register blueprints
     app.register_blueprint(ui_bp)
+    app.register_blueprint(api_bp)
 
     return app

@@ -1,0 +1,143 @@
+from flask import Blueprint, request, jsonify
+from app.models import db, Subscriber, Warning, Product
+from sqlalchemy.exc import IntegrityError
+import re
+
+api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+def is_valid_email(email):
+    email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$' # test@test.com
+    return re.match(email_pattern, email) is not None
+
+def warning_to_dict(warning):
+    return {
+        'id': warning.wID,
+        'title': warning.title,
+        'link': warning.link,
+        'publication_date': warning.publication_date.isoformat() if warning.publication_date else None,
+        'danger': warning.danger,
+        'brand': warning.brand,
+        'recommendations': warning.recommendations,
+        'products': [
+            {'name': p.product_name, 'batch': p.batch}
+            for p in warning.products
+        ],
+        'images': [
+            {'url': i.img_url, 'alt': i.alt_desc}
+            for i in warning.images
+        ]
+    }
+
+@api_bp.route('/subscribers', methods=['POST'])
+def add_subscriber():
+    """
+    Handles a POST request that adds a new email address to the subscribers table.
+    Expects a JSON body with an 'email' field.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    data = request.get_json()
+
+    if not data or 'email' not in data:
+        return jsonify({'error': 'Email is required'}), 400
+
+    email = data.get('email').strip()
+
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Invalid email address'}), 400
+
+    new_subscriber = Subscriber(email=email)
+    db.session.add(new_subscriber)
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Email already exists in the database'}), 409
+
+    return jsonify({'message': f'Email {email} successfully added to newsletter'}), 201
+
+@api_bp.route('/subscribers/<string:email>', methods=['DELETE'])
+def delete_subscriber(email):
+    """
+    Handles a DELETE request that permanently removes an email address from the subscribers table.
+    The email address is provided as a URL path parameter.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    subscriber = Subscriber.query.filter_by(email=email).first()
+
+    if not subscriber:
+        return jsonify({'error': f'Email {email} not found in the database'}), 404
+
+    db.session.delete(subscriber)
+    db.session.commit()
+
+    return jsonify({'message': f'Email {email} successfully removed from newsletter'}), 200
+
+@api_bp.route('/subscribers/<string:email>', methods=['PUT'])
+def update_subscriber(email):
+    """
+    Handles a PUT request that updates an existing email address in the subscribers table.
+    The current email address is provided as a URL path parameter.
+    Expects a JSON body with a 'new_email' field.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    data = request.get_json()
+
+    if not data or 'new_email' not in data:
+        return jsonify({'error': 'New email is required'}), 400
+
+    new_email = data.get('new_email').strip()
+
+    if not new_email or not is_valid_email(new_email):
+        return jsonify({'error': 'Invalid email address'}), 400
+
+    subscriber = Subscriber.query.filter_by(email=email).first()
+
+    if not subscriber:
+        return jsonify({'error': f'Email {email} not found in the database'}), 404
+
+    subscriber.email = new_email
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Email already exists in the database'}), 409
+
+    return jsonify({'message': f'Email successfully updated from {email} to {new_email}'}), 200
+
+@api_bp.route('/ostrzezenia', methods=['GET'])
+def get_alerts():
+    """
+    Handles a GET request that returns all alerts from the database in JSON format.
+    Results are sorted by publication date descending (newest first).
+    Returns a JSON array of all warning records.
+    """
+    alerts = Warning.query.order_by(Warning.publication_date.desc()).all()
+
+    return jsonify([warning_to_dict(alert) for alert in alerts]), 200
+
+@api_bp.route('/ostrzezenia/szukaj', methods=['GET'])
+def filter_alerts():
+    """
+    Handles a GET request that filters alerts based on query parameters.
+    Supports filtering by: zagrozenie (danger type), marka (brand), produkt (product name).
+    Multiple filters can be combined in a single request.
+    Returns a JSON array of matching warning records.
+    """
+    zagrozenie = request.args.get('zagrozenie', '').strip()
+    marka = request.args.get('marka', '').strip()
+    produkt = request.args.get('produkt', '').strip()
+
+    query = Warning.query
+
+    if zagrozenie:
+        query = query.filter(Warning.danger.ilike(f'%{zagrozenie}%'))
+    if marka:
+        query = query.filter(Warning.brand.ilike(f'%{marka}%'))
+    if produkt:
+        query = query.join(Product).filter(Product.product_name.ilike(f'%{produkt}%'))
+
+    alerts = query.order_by(Warning.publication_date.desc()).all()
+
+    return jsonify([warning_to_dict(alert) for alert in alerts]), 200
