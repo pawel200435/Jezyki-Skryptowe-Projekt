@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 from app.models import db, Subscriber, Warning, Product
 from sqlalchemy.exc import IntegrityError
 from app.utils.validators import is_valid_email
@@ -52,11 +52,10 @@ def add_subscriber():
 
     return jsonify({'message': f'Email {email} successfully added to newsletter'}), 201
 
-@api_bp.route('/subscribers/<string:email>', methods=['DELETE'])
-def delete_subscriber(email):
+@api_bp.route('/subscribers/<string:email>/force', methods=['DELETE'])
+def hard_delete_subscriber(email):
     """
-    Handles a DELETE request that permanently removes an email address from the subscribers table.
-    The email address is provided as a URL path parameter.
+    Handles a DELETE request that permanently removes an email address from the database.
     Returns a JSON response with the result and appropriate HTTP status code.
     """
     subscriber = Subscriber.query.filter_by(email=email).first()
@@ -67,7 +66,26 @@ def delete_subscriber(email):
     db.session.delete(subscriber)
     db.session.commit()
 
-    return jsonify({'message': f'Email {email} successfully removed from newsletter'}), 200
+    return jsonify({'message': f'Email {email} permanently deleted from the database'}), 200
+
+@api_bp.route('/subscribers/<string:email>', methods=['DELETE'])
+def deactivate_subscriber(email):
+    """
+    Handles a DELETE request that performs a soft delete.
+    Instead of removing the record, it sets the subscriber's status to inactive.
+    Returns a JSON response with the result and appropriate HTTP status code.
+    """
+    subscriber = Subscriber.query.filter_by(email=email).first()
+
+    if not subscriber:
+        return jsonify({'error': f'Email {email} not found in the database'}), 404
+    
+    if not subscriber.is_active:
+        return jsonify({'message': f'Email {email} is already deactivated'}), 200
+    
+    subscriber.is_active = False
+    db.session.commit()
+    return jsonify({'message': f'Email {email} successfully deactivated (soft delete)'}), 200
 
 @api_bp.route('/subscribers/<string:email>', methods=['PUT'])
 def update_subscriber(email):
@@ -137,3 +155,60 @@ def filter_alerts():
     alerts = query.order_by(Warning.publication_date.desc()).all()
 
     return jsonify([warning_to_dict(alert) for alert in alerts]), 200
+
+
+@api_bp.route('/warnings/<int:warning_id>')
+def get_warning_by_id(warning_id):
+    """
+    Retrieves a specific warning by its ID.
+    Returns 404 if the warning does not exist.
+    """
+    warning = Warning.query.filter_by(wID = warning_id).first()
+    if warning is None:
+        abort(404)
+
+    return jsonify(warning_to_dict(warning)), 200
+
+@api_bp.route('/warnings/<int:warning_id>/products')
+def get_warning_products(warning_id):
+    """
+    Retrieves products associated with a specific warning ID.
+    Supports optional filtering by product_name via query parameters.
+    Returns both the warning context and the filtered products.
+    """
+    warning = Warning.query.filter_by(wID = warning_id).first()
+    if warning is None:
+        abort(404)
+    
+    product_name = request.args.get('product_name', '').strip()
+
+    query = Product.query.filter_by(wID=warning_id)
+    if product_name:
+        query = query.filter(Product.product_name.ilike(f'%{product_name}%'))
+
+    filtered_products = query.all()
+    response_data = {
+        'warning_id': warning.wID,
+        'warning_title': warning.title,
+        'warning_link': warning.link,
+        'filtered_products': [{'name': p.product_name, 'batch': p.batch} for p in filtered_products]
+    }
+    
+    return jsonify(response_data), 200
+
+@api_bp.route('/warnings/<int:warning_id>/images')
+def get_warning_images(warning_id):
+    """
+    Retrieves only the images associated with a specific warning ID.
+    """
+    warning = Warning.query.filter_by(wID = warning_id).first()
+    if warning is None:
+        abort(404)
+    
+    images_data = [{'url': img.img_url, 'alt': img.alt_desc} for img in warning.images]
+    
+    return jsonify({
+        'warning_id': warning.wID,
+        'image_count': len(images_data),
+        'images': images_data
+    }), 200
