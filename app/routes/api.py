@@ -102,7 +102,7 @@ def update_subscriber(email):
 
     return jsonify({'message': f'Email successfully updated from {email} to {new_email}'}), 200
 
-@api_bp.route('/ostrzezenia', methods=['GET'])
+@api_bp.route('/warnings', methods=['GET'])
 def get_alerts():
     """
     Handles a GET request that returns all alerts from the database in JSON format.
@@ -113,7 +113,7 @@ def get_alerts():
 
     return jsonify([warning_to_dict(alert) for alert in alerts]), 200
 
-@api_bp.route('/ostrzezenia/szukaj', methods=['GET'])
+@api_bp.route('/warnings/search', methods=['GET'])
 def filter_alerts():
     """
     Handles a GET request that filters alerts based on query parameters.
@@ -121,18 +121,18 @@ def filter_alerts():
     Multiple filters can be combined in a single request.
     Returns a JSON array of matching warning records.
     """
-    zagrozenie = request.args.get('zagrozenie', '').strip()
-    marka = request.args.get('marka', '').strip()
-    produkt = request.args.get('produkt', '').strip()
+    danger = request.args.get('danger', '').strip()
+    brand = request.args.get('brand', '').strip()
+    product_name = request.args.get('product_name', '').strip()
 
     query = Warning.query
 
-    if zagrozenie:
-        query = query.filter(Warning.danger.ilike(f'%{zagrozenie}%'))
-    if marka:
-        query = query.filter(Warning.brand.ilike(f'%{marka}%'))
-    if produkt:
-        query = query.join(Product).filter(Product.product_name.ilike(f'%{produkt}%'))
+    if danger:
+        query = query.filter(Warning.danger.ilike(f'%{danger}%'))
+    if brand:
+        query = query.filter(Warning.brand.ilike(f'%{brand}%'))
+    if product_name:
+        query = query.join(Product).filter(Product.product_name.ilike(f'%{product_name}%'))
 
     alerts = query.order_by(Warning.publication_date.desc()).all()
 
