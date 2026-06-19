@@ -106,4 +106,10 @@ def refresh_data():
     """
     sync_warnings_to_db()
     current_time = datetime.now().strftime('%H:%M')
-    return render_template('partials/sync_button.html', last_sync=current_time)
+    
+    sync_button_html = render_template('partials/sync_button.html', last_sync=current_time)
+    
+    toast_html = render_template('partials/toast_success.html', 
+                                 notification={'message': 'Zaktualizowano ostrzeżenia GIS'}, oob=True)
+    
+    return sync_button_html + toast_html
