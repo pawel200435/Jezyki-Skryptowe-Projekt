@@ -1,14 +1,10 @@
 from flask import Blueprint, render_template, request, abort
 from app.models import db, Warning, Product, Subscriber
-import re
 from datetime import datetime
 from sync_rss import sync_warnings_to_db
+from app.utils.validators import is_valid_email
 
 ui_bp = Blueprint('ui', __name__)
-
-def is_valid_email(email):
-    email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$' # test@test.com
-    return re.match(email_pattern, email) is not None
 
 @ui_bp.route('/')
 def index():
