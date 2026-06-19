@@ -29,7 +29,7 @@ def sync_warnings_to_db():
             continue
         
         #extract info from raw HTML
-        extracted_info = extractor.parse_data_from_html(data['raw_html'])
+        extracted_info = extractor.extract(data['raw_html'])
 
         #datetime conversion
         pub_date = None

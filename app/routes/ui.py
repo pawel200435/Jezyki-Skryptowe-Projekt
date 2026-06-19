@@ -115,10 +115,12 @@ def refresh_data():
     
     sync_button_html = render_template('partials/sync_button.html', last_sync=current_time)
     
-    toast_html = render_template('partials/toast_success.html', 
-                                 notification={'message': 'Zaktualizowano ostrzeżenia GIS'}, oob=True)
+    # toast_html = render_template('partials/toast_success.html', 
+    #                              notification={'message': 'Zaktualizowano ostrzeżenia GIS'}, oob=True)
     
-    return sync_button_html + toast_html
+    latest_warnings = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
+    results_html = render_template('partials/search_results.html', alerts=latest_warnings, oob=True)
+    return sync_button_html + results_html # + toast_html
 
 @ui_bp.route('/ui/load-more', methods=['GET'])
 def load_more():

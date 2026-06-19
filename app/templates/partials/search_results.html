@@ -1,115 +1,117 @@
-{% if alerts %}
-    <table class="table table-hover shadow-sm align-middle bg-white w-100 m-0">
-        <thead class="position-sticky top-0 bg-white border-bottom-2 border-black shadow-sm">
-            <tr class="border-bottom-2 border-black bg-white align-middle">
-                <th class="text-center" style="width: 3%;">
-                    <input class="form-check-input m-0" type="checkbox" id="selectAllCheckboxes" title="Zaznacz wszystkie">
-                </th>
-                <th scope="col" style="width: 10%;">Zdjęcie</th>
-                <th scope="col" style="width: 27%;">Dotyczy (Produkt + Partia)</th>
-                <th scope="col" style="width: 20%;">Producent</th>
-                <th scope="col" style="width: 25%;">Zagrożenie</th>
-                <th scope="col" style="width: 10%;">Data komunikatu</th>
-                <th scope="col" style="width: 5%;"></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for alert in alerts %}
-            <tr>
-                <!-- checkbox -->
-                <td class="text-center">
-                    <input class="form-check-input alert-checkbox" type="checkbox" value="{{ alert.wID }}" name="alert_ids">
-                </td>
+<div id="search-results-container" {% if oob %}hx-swap-oob="true"{% endif %}>
+    {% if alerts %}
+        <table class="table table-hover shadow-sm align-middle bg-white w-100 m-0">
+            <thead class="position-sticky top-0 bg-white border-bottom-2 border-black shadow-sm">
+                <tr class="border-bottom-2 border-black bg-white align-middle">
+                    <th class="text-center" style="width: 3%;">
+                        <input class="form-check-input m-0" type="checkbox" id="selectAllCheckboxes" title="Zaznacz wszystkie">
+                    </th>
+                    <th scope="col" style="width: 10%;">Zdjęcie</th>
+                    <th scope="col" style="width: 27%;">Dotyczy (Produkt + Partia)</th>
+                    <th scope="col" style="width: 20%;">Producent</th>
+                    <th scope="col" style="width: 25%;">Zagrożenie</th>
+                    <th scope="col" style="width: 10%;">Data komunikatu</th>
+                    <th scope="col" style="width: 5%;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <!-- checkbox -->
+                    <td class="text-center">
+                        <input class="form-check-input alert-checkbox" type="checkbox" value="{{ alert.wID }}" name="alert_ids">
+                    </td>
 
-                <!-- image -->
-                <td>
-                    <!-- checking if there are relation and length is > 0-->
-                    {% if alert.images and alert.images|length > 0 %}
-                        <img src="{{ alert.images[0].img_url }}" alt="{{ alert.images[0].alt_desc }}" class="img-thumbnail" style="width: 86px; height: 86px; object-fit: cover;">
-                    {% else %}
-                        <div class="bg-light text-muted border d-flex justify-content-center align-items-center rounded" style="width: 86px; height: 86px;">
-                            -
-                        </div>
-                    {% endif %}
-                </td>
-
-                <!-- products -->
-                <td>
-                    <!-- checking like in images -->
-                    {% if alert.products and alert.products|length > 0 %}
-                        <!-- taking 1st product only -->
-                        <div class="fw-bold text-dark">{{ alert.products[0].product_name }}</div>
-                        <div class="text-muted">Partia: {{ alert.products[0].batch }}</div>
-                        
-                        <!-- if are more products in alert show badge -->
-                        {% if alert.products|length > 1 %}
-                            <span class="badge background-blue mt-1 fw-medium">
-                                + {{ alert.products|length - 1 }} inne produkty
-                            </span>
+                    <!-- image -->
+                    <td>
+                        <!-- checking if there are relation and length is > 0-->
+                        {% if alert.images and alert.images|length > 0 %}
+                            <img src="{{ alert.images[0].img_url }}" alt="{{ alert.images[0].alt_desc }}" class="img-thumbnail" style="width: 86px; height: 86px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light text-muted border d-flex justify-content-center align-items-center rounded" style="width: 86px; height: 86px;">
+                                -
+                            </div>
                         {% endif %}
-                        
-                    {% else %}
-                        <div class="fw-bold text-dark">{{ alert.title }}</div>
-                        <div class="text-muted small">Brak przypisanych produktów</div>
-                    {% endif %}
-                </td>
+                    </td>
 
-                <!-- brand -->
-                <td>
-                    <div title="{{ alert.brand }}" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                        {{ alert.brand if alert.brand else '-'}} 
-                    </div>
-                </td>
+                    <!-- products -->
+                    <td>
+                        <!-- checking like in images -->
+                        {% if alert.products and alert.products|length > 0 %}
+                            <!-- taking 1st product only -->
+                            <div class="fw-bold text-dark">{{ alert.products[0].product_name }}</div>
+                            <div class="text-muted">Partia: {{ alert.products[0].batch }}</div>
+                            
+                            <!-- if are more products in alert show badge -->
+                            {% if alert.products|length > 1 %}
+                                <span class="badge background-blue mt-1 fw-medium">
+                                    + {{ alert.products|length - 1 }} inne produkty
+                                </span>
+                            {% endif %}
+                            
+                        {% else %}
+                            <div class="fw-bold text-dark">{{ alert.title }}</div>
+                            <div class="text-muted small">Brak przypisanych produktów</div>
+                        {% endif %}
+                    </td>
 
-                <!-- danger -->
-                <td>
-                    <div class="text-red" title="{{ alert.danger }}" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
-                        {{ alert.danger if alert.danger else '-'}}
-                    </div>
-                </td>
+                    <!-- brand -->
+                    <td>
+                        <div title="{{ alert.brand }}" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ alert.brand if alert.brand else '-'}} 
+                        </div>
+                    </td>
 
-                <!-- publication_date-->
-                <td>
-                    {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else '-' }}
-                </td>
+                    <!-- danger -->
+                    <td>
+                        <div class="text-red" title="{{ alert.danger }}" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ alert.danger if alert.danger else '-'}}
+                        </div>
+                    </td>
 
-                <td class="text-center">
-                    <button class="btn btn-outline-blue btn-sm fw-bold px-3"
-                    hx-get="/ui/warning/{{ alert.wID }}" 
-                    hx-target="#warning-detail-modal-container"
-                    hx-swap="innerHTML"
-                    >Info</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p class="fs-3 text-center text-secondary">Brak ostrzeżeń o podanych parametrach</p>
-{% endif %}
+                    <!-- publication_date-->
+                    <td>
+                        {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else '-' }}
+                    </td>
 
-<script>
-    document.body.addEventListener('change', function(event) {
-    
-        // check/uncheck all
-        if (event.target.id === 'selectAllCheckboxes') {
-            const isChecked = event.target.checked;
-            const checkboxes = document.querySelectorAll('.alert-checkbox');
-            
-            checkboxes.forEach(el => {
-                el.checked = isChecked;
-            });
-        }
+                    <td class="text-center">
+                        <button class="btn btn-outline-blue btn-sm fw-bold px-3"
+                        hx-get="/ui/warning/{{ alert.wID }}" 
+                        hx-target="#warning-detail-modal-container"
+                        hx-swap="innerHTML"
+                        >Info</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="fs-3 text-center text-secondary">Brak ostrzeżeń o podanych parametrach</p>
+    {% endif %}
+
+    <script>
+        document.body.addEventListener('change', function(event) {
         
-        // if user uncheck one element the th checkbox need to be uncheck too 
-        if (event.target.classList.contains('alert-checkbox')) {
-            const allCheckboxes = document.querySelectorAll('.alert-checkbox');
-            const allChecked = Array.from(allCheckboxes).every(el => el.checked);
-            
-            const selectAllCb = document.getElementById('selectAllCheckboxes');
-            if (selectAllCb) {
-                selectAllCb.checked = allChecked;
+            // check/uncheck all
+            if (event.target.id === 'selectAllCheckboxes') {
+                const isChecked = event.target.checked;
+                const checkboxes = document.querySelectorAll('.alert-checkbox');
+                
+                checkboxes.forEach(el => {
+                    el.checked = isChecked;
+                });
             }
-        }
-    });
-</script>
+            
+            // if user uncheck one element the th checkbox need to be uncheck too 
+            if (event.target.classList.contains('alert-checkbox')) {
+                const allCheckboxes = document.querySelectorAll('.alert-checkbox');
+                const allChecked = Array.from(allCheckboxes).every(el => el.checked);
+                
+                const selectAllCb = document.getElementById('selectAllCheckboxes');
+                if (selectAllCb) {
+                    selectAllCb.checked = allChecked;
+                }
+            }
+        });
+    </script>
+</div>
