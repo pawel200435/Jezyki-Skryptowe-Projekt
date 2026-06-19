@@ -45,12 +45,7 @@
                         </h1>
                     </div>
                     
-                    <div class="topbar-actions d-flex align-items-center">
-                        <span class="text-muted me-3 last-update">ostatnio zaktualizowano: 3min. temu</span>
-                        <button class="btn btn-outline-dark fw-semibold">
-                            <i class="fa-solid fa-rotate-right me-1"></i> Odśwież ostrzeżenia GIS
-                        </button>
-                    </div>
+                    {% include 'partials/sync_button.html'  %}
                 </header>
 
                 <main class="main-background flex-grow-1 d-flex flex-column overflow-hidden">

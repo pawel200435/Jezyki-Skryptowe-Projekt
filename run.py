@@ -3,6 +3,7 @@ from app import create_app
 import threading
 # enums import
 from app.enums.WindowProperties import WindowProperties
+from sync_rss import sync_warnings_to_db
 
 # create flask app instance
 app = create_app()
@@ -10,14 +11,17 @@ app = create_app()
 
 
 if __name__ == '__main__':
+    #run scraper automatically on startup
+    with app.app_context():
+        sync_warnings_to_db()
 
     #new thread for flask to work in background on port 5000
-    flash_thread = threading.Thread(
+    flask_thread = threading.Thread(
         target=app.run,
         kwargs={'port': 5000}
     )
-    flash_thread.daemon = True
-    flash_thread.start()
+    flask_thread.daemon = True
+    flask_thread.start()
 
     #creating desktop window
     webview.create_window(

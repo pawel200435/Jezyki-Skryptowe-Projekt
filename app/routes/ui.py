@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, abort
 from app.models import db, Warning, Product, Subscriber
 import re
+from datetime import datetime
+from sync_rss import sync_warnings_to_db
 
 ui_bp = Blueprint('ui', __name__)
 
@@ -17,8 +19,11 @@ def index():
     # Fetch latest warnings sorted by publication date descending
     initial_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
 
+    #time for displaying information about last data refresh
+    current_time = datetime.now().strftime('%H:%M')
+
     # Pass the initial alerts to the main index template
-    return render_template('pages/index.html', alerts=initial_alerts)
+    return render_template('pages/index.html', alerts=initial_alerts, last_sync=current_time)
 
 @ui_bp.route('/search')
 def search_alerts():
@@ -95,3 +100,12 @@ def get_warining_details(warning_id):
         abort(404)
         
     return render_template('partials/warning_detail_modal.html', warning=warning)
+
+@ui_bp.route('/refresh', methods=['POST'])
+def refresh_data():
+    """
+    Triggers the RSS sync script and returns the updated timestamp button.
+    """
+    sync_warnings_to_db()
+    current_time = datetime.now().strftime('%H:%M')
+    return render_template('partials/sync_button.html', last_sync=current_time)
