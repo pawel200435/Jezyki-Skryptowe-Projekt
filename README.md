@@ -136,7 +136,8 @@ Additional GIS-related official channels (to be integrated later) may include go
 ## Documentation
 ### API Documentation:
 - https://documenter.getpostman.com/view/48536390/2sBXwvJUAb#intro [POSTMAN]
-- [docs/API_documentation.pdf](docs/API_documentation.pdf)
+- [docs/API_documentation.pdf](docs\EatSafe_API_Documentation.pdf)
+
 
 ---
 
