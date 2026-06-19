@@ -84,6 +84,8 @@ def export_warnings():
     warnings =  Warning.query.filter(Warning.wID.in_(selected_ids)).all()
     
     #TD: IMPLEMENTS FUNCIONS WHICH EXPORTS WARNINGS TO CSV/JSON FILE
+    # this commented return is for excpetion while export failure
+    # return render_template('partials/toast_failure.html', notification = {'message': 'Wystąpił błąd przy eksporcie danych'})
     
     return render_template('partials/toast_success.html', notification = {'message': 'Poprawnie wyeksportowano zaznaczone dane'})
 
