@@ -1,5 +1,9 @@
 <div class="w-100 py-2 bg-white">
-    <button type="button" class="btn btn-outline-blue w-100 text-center">
+    <button type="button" 
+    hx-get="/ui/load-more"
+    hx-target="#toastPlacement" 
+    hx-swap="beforeend" 
+    class="btn btn-outline-blue w-100 text-center">
         <i class="fa-solid fa-download"></i>
         Załaduj więcej ostrzeżeń</button>
 </div>
