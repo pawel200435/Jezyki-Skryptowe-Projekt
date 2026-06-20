@@ -31,7 +31,7 @@ def index():
 @ui_bp.route('/search')
 def search_alerts():
     """
-    Handles live-search requests triggered by HTMX.
+    Handles live-search requests and filtering triggered by HTMX.
     Filters warnings by product name, brand or danger and returns an HTML partial block.
     """
     search_query = request.args.get('q','').strip()
@@ -39,7 +39,8 @@ def search_alerts():
     date_to = request.args.get('date_to', '').strip()
     offset = request.args.get('offset', 0, type=int)
 
-    query = Warning.query.join(Product)
+    #get all warnings also ones without products 
+    query = Warning.query.outerjoin(Product)
 
     if search_query:
         # Filter database records by product_name, brand or danger (ilike is case-insensitive)
@@ -55,7 +56,7 @@ def search_alerts():
 
     #Date <= TO
     if date_to:
-        query = query.filter(Warning.publication_date <= date_to)
+        query = query.filter(Warning.publication_date <= f"{date_to} 23:59:59")
     
     total_matching = query.distinct().count()
     filtered_alerts = query.order_by(Warning.publication_date.desc()).distinct().offset(offset).limit(BATCH_SIZE).all()
@@ -63,15 +64,9 @@ def search_alerts():
     has_more = (offset + BATCH_SIZE) < total_matching
     next_offset = offset + BATCH_SIZE
 
-
     #check if request is from load-more
     if request.headers.get('HX-Target') == 'load-more-row':
-        #render rows
-        rows_html = render_template('partials/alert_table_rows.html', alerts=filtered_alerts)
-        #render buttons
-        button_html = render_template('partials/load_more_warnings_button.html', has_more=has_more, next_offset=next_offset)
-
-        return rows_html + button_html
+        return render_template('partials/load_more_response.html', alerts=filtered_alerts, has_more=has_more, next_offset=next_offset)
         
     #if request is from filtering/searching returns all table
     else:
