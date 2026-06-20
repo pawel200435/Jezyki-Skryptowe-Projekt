@@ -223,6 +223,21 @@
                 });
             })
         });
+
+
+        // Nasłuchujemy na moment, w którym Bootstrap w pełni otworzy jakikolwiek popover
+        document.addEventListener('shown.bs.popover', function (event) {
+            // Pobieramy ID aktualnie otwartego popovera
+            const popoverId = event.target.getAttribute('aria-describedby');
+            
+            if (popoverId) {
+                const popoverElement = document.getElementById(popoverId);
+                if (popoverElement) {
+                    // Magiczna funkcja HTMX, która skanuje i aktywuje ukryte w nim atrybuty
+                    htmx.process(popoverElement);
+                }
+            }
+        });
     </script>
 </body>
 </html>
