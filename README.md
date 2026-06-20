@@ -56,6 +56,7 @@ Zaimplementowano relacyjną bazę danych z wykorzystaniem **SQLAlchemy** (obsłu
 * **Modularność:** Kod został podzielony na logiczne pakiety (np. `app/routes/`, `app/utils/`, `scraper/`), co zapewnia wysoką czytelność struktury.
 * **Architektura API:** Aplikacja posiada wbudowane REST API udokumentowane w języku angielskim, umożliwiające zewnętrzny dostęp do ustrukturyzowanych danych o ostrzeżeniach.
 * **Wielowątkowość i Zarządzanie Procesami:** Integracja frameworka webowego z natywnym interfejsem desktopowym (`pywebview`) została zrealizowana przy użyciu wielowątkowości. Serwer Flask uruchamiany jest w wydzielonym wątku w trybie *daemon*, co zapewnia asynchroniczną i płynną pracę interfejsu bez blokowania głównego wątku, a także gwarantuje bezpieczne, automatyczne zamknięcie serwera w momencie wyłączenia okna aplikacji.
+* **Automatyczne Powiadomienia E-mail:** System posiada zintegrowany moduł SMTP (`run_sync_and_notify.py`). Skrypt ten synchronizuje bazę z najnowszymi danymi RSS, a w przypadku wykrycia nowych zagrożeń, automatycznie generuje i rozsyła bezpieczne (Bcc), sformatowane w HTML powiadomienia mailowe do wszystkich aktywnych subskrybentów z bazy.
 
 </div>
 
@@ -83,6 +84,12 @@ Moduł umożliwiający zapisanie się na powiadomienia o nowych ostrzeżeniach.
 
 ![Pop-up Newslettera](/docs/images/newsletter.png)
 
+### 4. System Powiadomień Email
+Dedykowany moduł wyzwalający, który w jednym cyklu odpytuje kanał GIS o najnowsze komunikaty, analizuje przyrost bazy danych i automatycznie powiadamia zapisaną społeczność poprzez system e-mailowy, generując alerty o nowych zagrożeniach.
+<br>
+
+![Email example](/docs/images/email_example.png)
+
 ---
 <br>
 
@@ -93,8 +100,11 @@ Moduł umożliwiający zapisanie się na powiadomienia o nowych ostrzeżeniach.
 2. Otwórz przeglądarkę i przejdź pod adres: http://localhost/phpmyadmin.
 3. Kliknij zakładkę "Nowa" (w lewym panelu) i utwórz pustą bazę danych o nazwie: eatsafe_db
 4. Upewnij się, że w głównym katalogu projektu znajduje się plik .env z poprawnym ciągiem połączeniowym (domyślny użytkownik w XAMPP to root z pustym hasłem).
+Jeśli chcesz wypróbowac system wysyłki maili potrzeba jeszcze danych autoryzacyjnych poczty. Do działania systemu powiadomień użyj konta Gmail z wygenerowanym w ustawieniach zabezpieczeń "Hasłem aplikacji" (App Password).
    Zawartość pliku .env:
    DATABASE_URL=mysql+pymysql://root:@localhost:3306/eatsafe_db
+   EMAIL=twoj.projektowy.mail@gmail.com
+   EMAIL_PASSWORD=twojeHasloAplikacjiGenerowanePrzezGmail
 
 5. Stwórz i aktywuj środowisko wirtualne (venv).
 6. Zainstaluj wymagane pakiety komendą: uv pip install -r requirements.txt
@@ -102,7 +112,8 @@ Moduł umożliwiający zapisanie się na powiadomienia o nowych ostrzeżeniach.
    python create_db.py
 8. Załaduj wstępne dane RSS do bazy danych, uruchamiając:
    python sync_rss.py
-
+9. Aby przetestować system mailowy, uruchom skrypt synchronizacji powiadomień:
+   python run_sync_and_notify.py
 ```
 ---
 <br>
@@ -206,6 +217,7 @@ A relational database has been implemented using **SQLAlchemy** (MySQL support).
 * **Modularity:** The code has been divided into logical packages (e.g., `app/routes/`, `app/utils/`, `scraper/`), ensuring high structural readability.
 * **API Architecture:** The application features a built-in REST API documented in English, enabling external access to structured warning data.
 * **Multithreading and Process Management:** The integration of the web framework with the native desktop interface (`pywebview`) was achieved using multithreading. The Flask server runs in a dedicated thread in *daemon* mode, ensuring asynchronous and smooth interface operation without blocking the main thread, and guaranteeing a safe, automatic shutdown of the server when the application window is closed.
+* **Automatic Email Notifications:** The system features an integrated SMTP module (`run_sync_and_notify.py`). This script synchronizes the database with the latest RSS data, and upon detecting new food safety warnings, it automatically generates and dispatches secure (Bcc), HTML-formatted email notifications to all active subscribers in the database.
 
 </div>
 
@@ -233,6 +245,12 @@ A module that allows users to subscribe to notifications about new warnings.
 
 ![Newsletter Pop-up](/docs/images/newsletter.png)
 
+
+### 4. Email Notification System
+A dedicated trigger module that polls the GIS channel for the latest messages in a single cycle, analyzes database growth, and automatically notifies the subscribed community via email, generating alerts about new threats.
+
+![Email example](/docs/images/email_example.png)
+
 ---
 <br>
 
@@ -243,14 +261,20 @@ A module that allows users to subscribe to notifications about new warnings.
 2. Open a browser and navigate to: http://localhost/phpmyadmin.
 3. Click the "New" tab (in the left panel) and create an empty database named: eatsafe_db
 4. Ensure that there is a .env file in the project's root directory with the correct connection string (the default user in XAMPP is root with an empty password).
+If you want to test the email delivery system, you will also need email authorization credentials. To operate the notification system, use a Gmail account with an "App Password" generated in the Google account security settings.
    .env file content:
    DATABASE_URL=mysql+pymysql://root:@localhost:3306/eatsafe_db
+   EMAIL=your.project.email@gmail.com
+   EMAIL_PASSWORD=yourAppPasswordGeneratedByGmail
+
 5. Create and activate a virtual environment (venv).
 6. Install the required packages with the command: uv pip install -r requirements.txt
 7. Generate tables in the database by running the script: 
    python create_db.py
 8. Load initial RSS data into the database by running:
    python sync_rss.py
+9. To test the email system, run the notification synchronization script:
+   python run_sync_and_notify.py
 ```
 
 ---
