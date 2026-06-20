@@ -3,6 +3,7 @@ from app.models import db, Warning, Product, Subscriber
 from datetime import datetime
 from sync_rss import sync_warnings_to_db
 from app.utils.validators import is_valid_email
+from sqlalchemy import or_
 
 ui_bp = Blueprint('ui', __name__)
 
@@ -15,7 +16,7 @@ def index():
     # Fetch latest warnings sorted by publication date descending
     initial_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
 
-    #time for displaying information about last data refresh
+    #time for displaying information about last data refresh (auto refresh on app start)
     current_time = datetime.now().strftime('%H:%M')
 
     # Pass the initial alerts to the main index template
@@ -25,12 +26,16 @@ def index():
 def search_alerts():
     """
     Handles live-search requests triggered by HTMX.
-    Filters warnings by product name and returns an HTML partial block.
+    Filters warnings by product name, brand or danger and returns an HTML partial block.
     """
     search_query = request.args.get('q','').strip()
     if search_query:
-        # Filter database records by product_name (ilike is case-insensitive)
-        filtered_alerts = Warning.query.join(Product).filter(Product.product_name.ilike(f'%{search_query}%')).all()
+        # Filter database records by product_name, brand or danger (ilike is case-insensitive)
+        filtered_alerts = Warning.query.join(Product).filter(or_(
+            Product.product_name.ilike(f'%{search_query}%'),
+            Warning.brand.ilike(f'%{search_query}%'),
+            Warning.danger.ilike(f'%{search_query}%')
+            )).order_by(Warning.publication_date.desc()).all()
     else:
         # If the search field is cleared, get the 10 most recent warnings
         filtered_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
