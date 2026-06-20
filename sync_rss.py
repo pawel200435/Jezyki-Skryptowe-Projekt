@@ -72,7 +72,8 @@ def sync_warnings_to_db():
         new_records_count+=1
     
     print(f"\nSynchronization complete. Added {new_records_count} new warnings to the database.")
-
+    
+    return new_records_count
 
 if __name__ == "__main__":
     load_dotenv()
