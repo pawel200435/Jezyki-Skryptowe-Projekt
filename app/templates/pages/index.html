@@ -71,23 +71,54 @@
                                 Sortuj
                             </button>
 
-                            <button type="button" class="btn btn-light fs-5 me-2"            
-                                data-bs-toggle="popover" 
-                                data-bs-placement="left" 
-                                data-popover-content="#filter-popover-template">
-                                <i class="fa-solid fa-filter fa-lg me-2"></i>
-                                Filtruj
-                            </button>
+                            
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-light fs-5 me-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <i class="fa-solid fa-filter fa-lg me-2"></i>
+                                    Filtruj
+                                </button>
+                                
+                                <div class="dropdown-menu shadow-sm p-0" style="min-width: 250px;">
+                                    <form id="filter-form" class="p-3" hx-get="/search" hx-include="#search-input" hx-target="#search-results-container" hx-swap="outerHTML">
+                                        <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.8rem;">Data publikacji</h6>
+                                        
+                                        <div class="mb-2">
+                                            <label for="date_from" class="form-label small text-muted mb-1 fw-semibold">Od:</label>
+                                            <input type="date" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}" class="form-control form-control-sm border">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="date_to" class="form-label small text-muted mb-1 fw-semibold">Do:</label>
+                                            <input type="date" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}" class="form-control form-control-sm border">
+                                        </div>
+                                        
+                                        <hr class="mx-n3">
+                                        <div class="d-flex gap-2">
+                                            <button type="button" 
+                                                    class="btn btn-outline-secondary btn-sm w-50"
+                                                    onclick="document.getElementById('date_from').value=''; document.getElementById('date_to').value=''; htmx.trigger('#filter-form', 'submit');">
+                                                Wyczyść
+                                            </button>
+                                            
+                                            <button type="submit" class="btn btn-dark btn-sm w-50">
+                                                Zastosuj
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
 
                             <div class="input-group" style="width: 400px;">
                                 <span class="input-group-text bg-light border"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                <input type="search" 
-                                       class="form-control border" 
-                                       placeholder="Wyszukaj..."
-                                       name="q"
-                                       hx-get="/search" 
-                                       hx-trigger="input changed delay:500ms, search" 
-                                       hx-target="#result-list">
+                                <input type="search"
+                                        id="search-input"
+                                        class="form-control border" 
+                                        placeholder="Wyszukaj..."
+                                        name="q"
+                                        hx-get="/search" 
+                                        hx-include="#filter-from"
+                                        hx-trigger="input changed delay:500ms, search" 
+                                        hx-target="#result-list">
                             </div>
                         </div>
                     </div>
@@ -222,21 +253,6 @@
                     toastEl.remove();
                 });
             })
-        });
-
-
-        // Nasłuchujemy na moment, w którym Bootstrap w pełni otworzy jakikolwiek popover
-        document.addEventListener('shown.bs.popover', function (event) {
-            // Pobieramy ID aktualnie otwartego popovera
-            const popoverId = event.target.getAttribute('aria-describedby');
-            
-            if (popoverId) {
-                const popoverElement = document.getElementById(popoverId);
-                if (popoverElement) {
-                    // Magiczna funkcja HTMX, która skanuje i aktywuje ukryte w nim atrybuty
-                    htmx.process(popoverElement);
-                }
-            }
         });
     </script>
 </body>
