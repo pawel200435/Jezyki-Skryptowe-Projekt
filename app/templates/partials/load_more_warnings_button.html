@@ -3,7 +3,7 @@
     <td colspan="7" class="p-0 border-0">
         <div class="w-100 py-2 bg-white">
             <button type="button"
-                hx-get="/ui/load-more?offset={{ next_offset|default(10) }}"
+                hx-get="/ui/load-more?offset={{ next_offset|default(10) }}&sort={{ current_sort|default('date_desc') }}"
                 hx-target="#load-more-row"
                 hx-swap="outerHTML"
                 class="btn btn-outline-blue w-100 text-center">

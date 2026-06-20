@@ -87,7 +87,8 @@
                                        name="q"
                                        hx-get="/search" 
                                        hx-trigger="input changed delay:500ms, search" 
-                                       hx-target="#result-list">
+                                       hx-target="#result-list"
+                                       hx-include="#current-sort">
                             </div>
                         </div>
                     </div>
@@ -99,6 +100,8 @@
                     <div class="d-none" id="filter-popover-template">
                         {% include 'partials/filter_popover.html' %}
                     </div>
+
+                    <input type="hidden" id="current-sort" name="sort" value="date_desc">
 
                     <div id="result-list" class="flex-grow-1 overflow-auto ps-2 pb-2">
                         {% include 'partials/search_results.html' %}
@@ -127,6 +130,14 @@
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
     <script>
+
+        // The page always loads data sorted by date (newest), so keep #current-sort in sync.
+        // Covers bfcache restore (pageshow fires with persisted=true after back/forward or reload).
+        window.addEventListener('pageshow', function() {
+            let cs = document.getElementById('current-sort');
+            if (cs) cs.value = 'date_desc';
+        });
+
         //CONST ELEMENTS
         // navbar modals buttons 
         const btnInfo = document.getElementById('nav-btn-info');
@@ -161,7 +172,19 @@
 
             if (contentSelector) {
                 popoverOptions.content = function() {
-                    return document.querySelector(contentSelector).innerHTML;
+                    let el = document.querySelector(contentSelector);
+                    // Sort popover: derive the checked radio from the single source of truth (#current-sort)
+                    if (contentSelector === '#sort-popover-template') {
+                        let currentSort = (document.getElementById('current-sort') || {}).value || 'date_desc';
+                        el.querySelectorAll('.sort-option').forEach(function(r) {
+                            if (r.value === currentSort) {
+                                r.setAttribute('checked', 'checked');
+                            } else {
+                                r.removeAttribute('checked');
+                            }
+                        });
+                    }
+                    return el.innerHTML;
                 };
             }
 
@@ -194,9 +217,35 @@
             }
         });
 
+        // Sort option handler - listens for clicks on sort radio buttons inside Bootstrap popover
+        document.body.addEventListener('change', function(event) {
+            if (event.target.classList.contains('sort-option')) {
+                let sortValue = event.target.value;
+
+                // Update hidden input so search and load-more include the sort param
+                document.getElementById('current-sort').value = sortValue;
+
+                // Close the sort popover
+                let popoverBtn = document.querySelector('[data-popover-content="#sort-popover-template"]');
+                let popoverInstance = bootstrap.Popover.getInstance(popoverBtn);
+                if (popoverInstance) popoverInstance.hide();
+
+                // Get current search query to preserve it during re-sort
+                let searchQuery = document.querySelector('input[name="q"]').value || '';
+
+                // Trigger HTMX request to reload results with new sort order
+                htmx.ajax('GET', '/search?sort=' + sortValue + '&q=' + encodeURIComponent(searchQuery), {target: '#result-list'});
+            }
+        });
 
         // GLOBAL EVENTS BY HTMX
         document.body.addEventListener("htmx:afterSwap", function(event) {
+            // GIS refresh reloads data as date_desc -> reset sort source of truth
+            if (event.detail.target.id === "sync-status") {
+                let cs = document.getElementById('current-sort');
+                if (cs) cs.value = 'date_desc';
+            }
+
             // provides when user click info button from warning detail modal will shows up 
             // if new modal was swaped
             if (event.detail.target.id === "warning-detail-modal-container") {
