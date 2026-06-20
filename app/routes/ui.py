@@ -3,11 +3,31 @@ from app.models import db, Warning, Product, Subscriber
 from datetime import datetime
 from sync_rss import sync_warnings_to_db
 from app.utils.validators import is_valid_email
-from sqlalchemy import or_
+from sqlalchemy import or_, collate
 
 ui_bp = Blueprint('ui', __name__)
 
 BATCH_SIZE = 10
+
+def get_sort_clause(sort_param):
+    sort_options = {
+        'date_desc': Warning.publication_date.desc(),
+        'date_asc': Warning.publication_date.asc(),
+        'brand_asc': collate(Warning.brand, 'utf8mb4_polish_ci').asc(),
+        'brand_desc': collate(Warning.brand, 'utf8mb4_polish_ci').desc(),
+        'product_asc': db.func.min(collate(Product.product_name, 'utf8mb4_polish_ci')).asc(),
+        'product_desc': db.func.max(collate(Product.product_name, 'utf8mb4_polish_ci')).desc(),
+    }
+    return sort_options.get(sort_param, Warning.publication_date.desc())
+
+def build_sorted_query(sort_param):
+    """
+    Builds a Warning query with the appropriate sort order.
+    Product sorting requires an outerjoin and group_by to handle one-to-many relationship.
+    """
+    if sort_param in ('product_asc', 'product_desc'):
+        return Warning.query.outerjoin(Product).group_by(Warning.wID).order_by(get_sort_clause(sort_param))
+    return Warning.query.order_by(get_sort_clause(sort_param))
 
 @ui_bp.route('/')
 def index():
@@ -15,7 +35,6 @@ def index():
     Renders the main dashboard page.
     Fetches the 10 most recent food warnings to display on initial application load.
     """
-    # Fetch latest warnings sorted by publication date descending
     initial_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(BATCH_SIZE).all()
 
     #time for displaying information about last data refresh (auto refresh on app start)
@@ -24,19 +43,20 @@ def index():
     total = Warning.query.count()
     has_more = total > BATCH_SIZE
 
-    # Pass the initial alerts to the main index template
     return render_template('pages/index.html', alerts=initial_alerts, last_sync=current_time,
-                           has_more=has_more, next_offset=BATCH_SIZE)
+                           has_more=has_more, next_offset=BATCH_SIZE, current_sort='date_desc')
 
 @ui_bp.route('/search')
 def search_alerts():
     """
     Handles live-search requests and filtering triggered by HTMX.
     Filters warnings by product name, brand or danger and returns an HTML partial block.
+    Supports sorting via the 'sort' query parameter.
     """
     search_query = request.args.get('q','').strip()
     date_from = request.args.get('date_from', '').strip()
     date_to = request.args.get('date_to', '').strip()
+    sort_param = request.args.get('sort', 'date_desc')
     offset = request.args.get('offset', 0, type=int)
 
     #get all warnings also ones without products 
@@ -53,11 +73,14 @@ def search_alerts():
     #Date >= FROM
     if date_from:
         query = query.filter(Warning.publication_date >= date_from)    
-
     #Date <= TO
     if date_to:
         query = query.filter(Warning.publication_date <= f"{date_to} 23:59:59")
     
+    if sort_param in ('product_asc', 'product_desc'):
+            query = query.group_by(Warning.wID)
+    query = query.order_by(get_sort_clause(sort_param))
+
     total_matching = query.distinct().count()
     filtered_alerts = query.order_by(Warning.publication_date.desc()).distinct().offset(offset).limit(BATCH_SIZE).all()
 
@@ -66,31 +89,15 @@ def search_alerts():
 
     #check if request is from load-more
     if request.headers.get('HX-Target') == 'load-more-row':
-        return render_template('partials/load_more_response.html', alerts=filtered_alerts, has_more=has_more, next_offset=next_offset)
-        
+        return render_template('partials/load_more_response.html', 
+                               alerts=filtered_alerts, has_more=has_more, 
+                               next_offset=next_offset, current_sort=sort_param)
     #if request is from filtering/searching returns all table
     else:
-        return render_template('partials/search_results.html', alerts=filtered_alerts, has_more=has_more, next_offset=next_offset)
+        return render_template('partials/search_results.html', 
+                               alerts=filtered_alerts, has_more=has_more, 
+                               next_offset=next_offset, current_sort=sort_param)
 
-
-# @ui_bp.route('/ui/load-more', methods=['GET'])
-# def load_more():
-#     """
-#     Handles HTMX request to load the next batch of warnings.
-#     Returns new table rows and an updated load more button.
-#     """
-#     offset = request.args.get('offset', BATCH_SIZE, type=int)
-    
-#     alerts = Warning.query.order_by(Warning.publication_date.desc()).offset(offset).limit(BATCH_SIZE).all()
-    
-#     total = Warning.query.count()
-#     next_offset = offset + BATCH_SIZE
-#     has_more = next_offset < total
-    
-#     return render_template('partials/load_more_response.html',
-#                            alerts=alerts,
-#                            has_more=has_more,
-#                            next_offset=next_offset)
 
 @ui_bp.route('/ui/newsletter/subscribe', methods=['POST'])
 def subscirbe():
@@ -174,5 +181,5 @@ def refresh_data():
     total = Warning.query.count()
     has_more = total > BATCH_SIZE
     results_html = render_template('partials/search_results.html', alerts=latest_warnings, oob=True,
-                                   has_more=has_more, next_offset=BATCH_SIZE)
+                                   has_more=has_more, next_offset=BATCH_SIZE, current_sort='date_desc')
     return sync_button_html + results_html

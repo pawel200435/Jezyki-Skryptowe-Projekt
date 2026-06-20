@@ -3,8 +3,8 @@
     <td colspan="7" class="p-0 border-0">
         <div class="w-100 py-2 bg-white">
             <button type="button"
-                hx-get="/search?offset={{ next_offset|default(10) }}"
-                hx-include="#search-input, #date_from, #date_to"
+                hx-get="/search?offset={{ next_offset|default(10) }}&sort={{ current_sort|default('date_desc') }}"
+                hx-include="#search-input, #date_from, #date_to, #current-sort"
                 hx-target="#load-more-row"
                 hx-swap="outerHTML"
                 class="btn btn-outline-blue w-100 text-center">
