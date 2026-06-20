@@ -3,9 +3,12 @@ import requests
 import time
 from datetime import datetime
 import extractor
+from fake_useragent import UserAgent
+
 
 def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EatSafe-Projekt-Akademicki'}
+    ua = UserAgent()
+    headers = {'User-Agent': ua.random}
     URL_BASE = "https://www.gov.pl"
     pg_count=0
 
@@ -21,10 +24,11 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
 
     except Exception as e:
         print("Error while initialising")
+        return []
 
     result=[]
 
-    for i in range(1, pg_count+1):
+    for i in range(1, 3):
         print(f"processing page {i}/{pg_count}")
         page_url=url if i==1 else f"{url}?page={i}"
 
@@ -66,32 +70,33 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
                             date_raw = date_span.get_text(strip=True)
                             if date_raw:
                                 date = datetime.strptime(date_raw, "%d.%m.%Y")
-
+                    # looking for archives, last few <li> direct you to fe ostrzezenia-2019
+                    if "ostrzezenia-20" in full_link:
+                        print(f"scraping data from link: {full_link}")
+                        scraped_data = scrape_gov_data(full_link)
+                        result=result + scraped_data
                     # get article's raw html
-                    raw_html = get_raw_html(full_link)
-                    # and extract it using extractor module
-                    ext_data = extractor.extract(raw_html)
+                    else:
+                        raw_html = get_raw_html(full_link)
+                        # and extract it using extractor module
+                        ext_data = extractor.extract(raw_html)
+                        result.append({
+                            "title": title,
+                            "link": full_link,
+                            "publication_date": date,
+                            "raw_html": raw_html,
 
-                    result.append({
-                        "title": title,
-                        "link": full_link,
-                        "publication_date": date,
-                        "raw_html": raw_html,
-
-                        "cleared_html": ext_data.get("cleared_html"),
-                        "images": ext_data.get("images"),
-                        "danger": ext_data.get("danger"),
-                        "product": ext_data.get("product"),
-                        "brand": ext_data.get("brand"),
-                        "recommendations": ext_data.get("recommendations"),
-                    })
-            # sleep so the scraper doesnt get banned
-            time.sleep(0.5)
+                            "cleared_html": ext_data.get("cleared_html"),
+                            "images": ext_data.get("images"),
+                            "danger": ext_data.get("danger"),
+                            "product": ext_data.get("product"),
+                            "brand": ext_data.get("brand"),
+                            "recommendations": ext_data.get("recommendations"),
+                        })
+                        time.sleep(1)
         except requests.exceptions.RequestException as e:
             print(f"error while paginating: {e}")
-
     return result
-
 def get_raw_html(art_url):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EatSafe-Projekt-Akademicki'}
     try:
@@ -111,4 +116,7 @@ def get_raw_html(art_url):
 
 
 if __name__ == "__main__":
-    extractor.check_missing(scrape_gov_data())
+    # extractor.check_missing(scrape_gov_data())
+    for d in scrape_gov_data():
+        print(d["title"])
+        print(d["product"])
