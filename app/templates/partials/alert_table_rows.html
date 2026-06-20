@@ -1,0 +1,62 @@
+{% for alert in alerts %}
+<tr>
+    <!-- checkbox -->
+    <td class="text-center">
+        <input class="form-check-input alert-checkbox" type="checkbox" value="{{ alert.wID }}" name="alert_ids">
+    </td>
+
+    <!-- image -->
+    <td>
+        {% if alert.images and alert.images|length > 0 %}
+            <img src="{{ alert.images[0].img_url }}" alt="{{ alert.images[0].alt_desc }}" class="img-thumbnail" style="width: 86px; height: 86px; object-fit: cover;">
+        {% else %}
+            <div class="bg-light text-muted border d-flex justify-content-center align-items-center rounded" style="width: 86px; height: 86px;">
+                -
+            </div>
+        {% endif %}
+    </td>
+
+    <!-- products -->
+    <td>
+        {% if alert.products and alert.products|length > 0 %}
+            <div class="fw-bold text-dark">{{ alert.products[0].product_name }}</div>
+            <div class="text-muted">Partia: {{ alert.products[0].batch }}</div>
+            {% if alert.products|length > 1 %}
+                <span class="badge background-blue mt-1 fw-medium">
+                    + {{ alert.products|length - 1 }} inne produkty
+                </span>
+            {% endif %}
+        {% else %}
+            <div class="fw-bold text-dark">{{ alert.title }}</div>
+            <div class="text-muted small">Brak przypisanych produktów</div>
+        {% endif %}
+    </td>
+
+    <!-- brand -->
+    <td>
+        <div title="{{ alert.brand }}" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+            {{ alert.brand if alert.brand else '-'}} 
+        </div>
+    </td>
+
+    <!-- danger -->
+    <td>
+        <div class="text-red" title="{{ alert.danger }}" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+            {{ alert.danger if alert.danger else '-'}}
+        </div>
+    </td>
+
+    <!-- publication_date-->
+    <td>
+        {{ alert.publication_date.strftime('%Y-%m-%d') if alert.publication_date else '-' }}
+    </td>
+
+    <td class="text-center">
+        <button class="btn btn-outline-blue btn-sm fw-bold px-3"
+        hx-get="/ui/warning/{{ alert.wID }}" 
+        hx-target="#warning-detail-modal-container"
+        hx-swap="innerHTML"
+        >Info</button>
+    </td>
+</tr>
+{% endfor %}

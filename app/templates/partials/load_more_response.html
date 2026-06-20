@@ -1,9 +1,11 @@
-{% if has_more is defined and has_more %}
+{% include 'partials/alert_table_rows.html' %}
+
+{% if has_more %}
 <tr id="load-more-row">
     <td colspan="7" class="p-0 border-0">
         <div class="w-100 py-2 bg-white">
             <button type="button"
-                hx-get="/ui/load-more?offset={{ next_offset|default(10) }}"
+                hx-get="/ui/load-more?offset={{ next_offset }}"
                 hx-target="#load-more-row"
                 hx-swap="outerHTML"
                 class="btn btn-outline-blue w-100 text-center">
@@ -11,6 +13,12 @@
                 Załaduj więcej ostrzeżeń
             </button>
         </div>
+    </td>
+</tr>
+{% else %}
+<tr id="load-more-row">
+    <td colspan="7" class="p-0 border-0 text-center text-muted py-3">
+        Wyświetlono wszystkie ostrzeżenia
     </td>
 </tr>
 {% endif %}

@@ -7,6 +7,8 @@ from sqlalchemy import or_
 
 ui_bp = Blueprint('ui', __name__)
 
+BATCH_SIZE = 10
+
 @ui_bp.route('/')
 def index():
     """
@@ -14,13 +16,17 @@ def index():
     Fetches the 10 most recent food warnings to display on initial application load.
     """
     # Fetch latest warnings sorted by publication date descending
-    initial_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
+    initial_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(BATCH_SIZE).all()
 
     #time for displaying information about last data refresh (auto refresh on app start)
     current_time = datetime.now().strftime('%H:%M')
 
+    total = Warning.query.count()
+    has_more = total > BATCH_SIZE
+
     # Pass the initial alerts to the main index template
-    return render_template('pages/index.html', alerts=initial_alerts, last_sync=current_time)
+    return render_template('pages/index.html', alerts=initial_alerts, last_sync=current_time,
+                           has_more=has_more, next_offset=BATCH_SIZE)
 
 @ui_bp.route('/search')
 def search_alerts():
@@ -36,11 +42,33 @@ def search_alerts():
             Warning.brand.ilike(f'%{search_query}%'),
             Warning.danger.ilike(f'%{search_query}%')
             )).order_by(Warning.publication_date.desc()).all()
+        return render_template('partials/search_results.html', alerts=filtered_alerts)
     else:
-        # If the search field is cleared, get the 10 most recent warnings
-        filtered_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
+        # If the search field is cleared, get the most recent warnings with load more button
+        filtered_alerts = Warning.query.order_by(Warning.publication_date.desc()).limit(BATCH_SIZE).all()
+        total = Warning.query.count()
+        has_more = total > BATCH_SIZE
+        return render_template('partials/search_results.html', alerts=filtered_alerts,
+                               has_more=has_more, next_offset=BATCH_SIZE)
+
+@ui_bp.route('/ui/load-more', methods=['GET'])
+def load_more():
+    """
+    Handles HTMX request to load the next batch of warnings.
+    Returns new table rows and an updated load more button.
+    """
+    offset = request.args.get('offset', BATCH_SIZE, type=int)
     
-    return render_template('partials/search_results.html', alerts=filtered_alerts)
+    alerts = Warning.query.order_by(Warning.publication_date.desc()).offset(offset).limit(BATCH_SIZE).all()
+    
+    total = Warning.query.count()
+    next_offset = offset + BATCH_SIZE
+    has_more = next_offset < total
+    
+    return render_template('partials/load_more_response.html',
+                           alerts=alerts,
+                           has_more=has_more,
+                           next_offset=next_offset)
 
 @ui_bp.route('/ui/newsletter/subscribe', methods=['POST'])
 def subscirbe():
@@ -120,15 +148,9 @@ def refresh_data():
     
     sync_button_html = render_template('partials/sync_button.html', last_sync=current_time)
     
-    # toast_html = render_template('partials/toast_success.html', 
-    #                              notification={'message': 'Zaktualizowano ostrzeżenia GIS'}, oob=True)
-    
-    latest_warnings = Warning.query.order_by(Warning.publication_date.desc()).limit(10).all()
-    results_html = render_template('partials/search_results.html', alerts=latest_warnings, oob=True)
-    return sync_button_html + results_html # + toast_html
-
-@ui_bp.route('/ui/load-more', methods=['GET'])
-def load_more():
-    
-    return render_template('partials/toast_success.html', 
-                                 notification={'message': 'Załadowano dodatkowe ostrzeżenia'})
+    latest_warnings = Warning.query.order_by(Warning.publication_date.desc()).limit(BATCH_SIZE).all()
+    total = Warning.query.count()
+    has_more = total > BATCH_SIZE
+    results_html = render_template('partials/search_results.html', alerts=latest_warnings, oob=True,
+                                   has_more=has_more, next_offset=BATCH_SIZE)
+    return sync_button_html + results_html
