@@ -116,7 +116,7 @@
                                         placeholder="Wyszukaj..."
                                         name="q"
                                         hx-get="/search" 
-                                        hx-include="#filter-from"
+                                        hx-include="#date_from, #date_to"
                                         hx-trigger="input changed delay:500ms, search" 
                                         hx-target="#result-list">
                             </div>
@@ -125,10 +125,6 @@
 
                     <div class="d-none" id="sort-popover-template">
                         {% include 'partials/sort_popover.html' %}
-                    </div>
-
-                    <div class="d-none" id="filter-popover-template">
-                        {% include 'partials/filter_popover.html' %}
                     </div>
 
                     <div id="result-list" class="flex-grow-1 overflow-auto ps-2 pb-2">
