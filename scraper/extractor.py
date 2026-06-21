@@ -1,8 +1,7 @@
 from bs4 import BeautifulSoup, NavigableString
 
-
 def extract(html_content):
-
+    URL_BASE = "https://www.gov.pl"
     result={
         'danger': "",
         'product' : set(),
@@ -28,7 +27,7 @@ def extract(html_content):
             if "zdjęcie" in col or "zdjęcia" in col:
                 imgIdx = i
 
-            elif ("partii" in col or "partia" in col or "trwałości" in col or "partie" in col) and (batchIdx==-1):
+            elif ("partii" in col or "partia" in col or "trwałości" in col or "partie" in col or "ean" in col) and (batchIdx == -1):
                 batchIdx = i
 
             elif "produkt" in col or "nazwa" in col:
@@ -39,6 +38,8 @@ def extract(html_content):
         current_table_prod = ""
         # now we iterate on the remaining rows
         for row in rows[1:]:
+            if row.find("th"):
+                continue
             cells_raw = row.find_all("td")
             # search for <img> blocks within these cols
             if imgIdx != -1 and imgIdx < len(cells_raw):
@@ -47,8 +48,15 @@ def extract(html_content):
                 if imgs:
                     # create a tuple of a description and src
                     # this list comprehension allows us to analyze few different pictures in the same cell
-                    img_final = {(tag.get('alt', ""), tag.get('src', "")) for tag in imgs }
-                    # add newly found images to result
+                    img_final = {
+                        (
+                            tag.get('alt', ""),
+                            "No Image" if "data:image" in tag.get('src', "")
+                            else URL_BASE + tag.get('src', "") if tag.get('src', "").startswith("/photo/")
+                            else tag.get('src', "")
+                        )
+                        for tag in imgs
+                    }# add newly found images to result
                     result['images'].update(img_final)
 
             if len(cells_raw) > 0:
@@ -84,8 +92,18 @@ def extract(html_content):
     # second part - the interesting data is usually in <strong> blocks
     prod_name, prod_batch = "", ""
     for strong in soup.find_all("strong"):
-        # we search for immediate text neighbor of label <strong>
-        prev_text = strong.find_previous(string=True)
+        if strong.find_parent("table"):
+            continue
+
+        if strong.parent and strong.parent.name == "li":
+            parent_list = strong.find_parent(["ul", "ol"])
+            if parent_list:
+                prev_text = parent_list.find_previous(string=True)
+            else:
+                prev_text = strong.find_previous(string=True)
+        else:
+            # we search for immediate text neighbor of label <strong>
+            prev_text = strong.find_previous(string=True)
 
         # we skip spaces and enters
         while prev_text and not prev_text.strip():
@@ -103,10 +121,11 @@ def extract(html_content):
                 parts = val.split(":", 1)
                 txt = parts[0].strip().lower()
                 val = parts[1].strip()
-
+            if len(txt)>60:
+                txt=""
 
             # logical checks, for categorizing
-            if "partii" in txt or "partia" in txt or "trwałości" in txt or "partie" in txt or "kreskowy" in txt or "ean" in txt:
+            if "referencyjny" in txt or "partii" in txt or "partia" in txt or "partie" in txt or "ean" in txt or (("trwałości" in txt or "kreskowy" in txt) and result["product"]):
                 prod_batch = val
 
             elif "produkt" in txt or "nazwa" in txt or "produktu" in txt:
@@ -115,7 +134,7 @@ def extract(html_content):
             elif "firmy" in txt or "firma" in txt or "marka" in txt or "dystrybutor" in txt:
                 result['brand']=val
 
-            elif not result['brand'] and ("producent" in txt or "wyprodukowano" in txt or "pakowano" in txt):
+            elif not result['brand'] and ("producent" in txt or "wyprodukowano" in txt or "pakowano" in txt or "importer" in txt):
                 result['brand']=val
         # appending product lists - sometimes one warning contains more than one product
         if prod_name and prod_batch:
@@ -139,16 +158,31 @@ def extract(html_content):
         images = gallery_section.find_all("img", src=True)
         # a set of tuples, first argument being imgs description, and second one being the link
         # also small check - GIS always includes their graphic, and it always ends in 1920x810
-        img_urls = {(tag.get('alt', ""), tag['src']) for tag in images if "resolution/1920x810" not in tag['src']}
+        img_urls={
+            (
+                tag.get('alt', ""),
+                "No Image" if "data:image/png" in tag['src'] else
+                URL_BASE + tag['src'] if tag['src'].startswith("/photo/") else
+                tag['src']
+            )
+            for tag in images
+        }
         result['images'].update(img_urls)
         # we can destroy this section since we've already extracted our urls
         gallery_section.decompose()
 
     # if we didn't find any images, we have to take anything the article has to offer
     if not result.get('images'):
-        images=soup.find_all("img", src=True)
-        # usually te "/format/" part of the img link means it's like a logo or sth
-        img_urls={(tag.get('alt', ""), tag['src']) for tag in images if "/format/" not in tag['src']}
+        images=soup.find("article").find_all("img", src=True)
+        img_urls={
+            (
+                tag.get('alt', ""),
+                "No Image" if "data:image/png" in tag['src'] else
+                URL_BASE + tag['src'] if tag['src'].startswith("/photo/") else
+                tag['src']
+            )
+            for tag in images
+        }
         result['images'].update(img_urls)
     # There is always a small header telling the reader how many photos are there in the gallery
     # We must get rid of it
@@ -179,6 +213,9 @@ def extract(html_content):
                 label = parts[0].lower()
                 value = parts[1].strip()
 
+                if len(label) > 60:
+                    continue
+
                 # we look for brands if it's still empty
                 if not result['brand'] and any(
                         word in label for word in ["firmy", "firma", "marka", "dystrybutor", "producent", "wyprodukowano"]):
@@ -196,11 +233,6 @@ def extract(html_content):
                     if product_name and batch_nr:
                         result['product'].add((product_name, batch_nr))
                         batch_nr = ""
-
-
-
-
-
     return result
 
 

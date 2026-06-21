@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 from datetime import datetime
-import extractor
+from scraper import extractor
 from fake_useragent import UserAgent
 
 
@@ -20,7 +20,7 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
         # extracting last page number
         pg_count_tag = soup.find("a", class_="pagination__total-count")
         pg_count = int(pg_count_tag.get_text()) if pg_count_tag else 1
-        print(f"found {pg_count} pages")
+        # print(f"found {pg_count} pages")
 
     except Exception as e:
         print("Error while initialising")
@@ -28,8 +28,9 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
 
     result=[]
 
-    for i in range(1, 3):
-        print(f"processing page {i}/{pg_count}")
+    # load only the first 15 pages.
+    for i in range(1, 15):
+        # print(f"processing page {i}/{pg_count}")
         page_url=url if i==1 else f"{url}?page={i}"
 
         try:
@@ -93,12 +94,13 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
                             "brand": ext_data.get("brand"),
                             "recommendations": ext_data.get("recommendations"),
                         })
-                        time.sleep(1)
+                        # time.sleep(0.5)
         except requests.exceptions.RequestException as e:
             print(f"error while paginating: {e}")
     return result
 def get_raw_html(art_url):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EatSafe-Projekt-Akademicki'}
+    ua = UserAgent()
+    headers = {'User-Agent': ua.random}
     try:
         response = requests.get(art_url, headers=headers, timeout=10)
         if response.status_code == 200:
