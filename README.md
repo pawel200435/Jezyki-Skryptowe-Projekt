@@ -11,7 +11,7 @@ Projekt rozwiązuje realny problem rozproszonych i trudnych w nawigacji danych r
 </div>
 <br>
 
-![Ekran główny aplikacji EatSafe](/docs/images/app.png)
+![Ekran główny aplikacji EatSafe](/docs/images/app.png) <br>
 *Zrzut ekranu przedstawiający główny interfejs aplikacji.*
 
 ---
@@ -49,8 +49,9 @@ Zaimplementowano relacyjną bazę danych z wykorzystaniem **SQLAlchemy** (obsłu
 
 <br>
 
-![Schemat bazy danych](/docs/eatsafe_db.png) <br>
+![Schemat bazy danych](/docs/images/eatsafe_db_diagram.png) <br>
 *Struktura relacyjnej bazy danych.*
+
 
 ### 3. Dodatkowe funkcjonalności
 * **Modularność:** Kod został podzielony na logiczne pakiety (np. `app/routes/`, `app/utils/`, `scraper/`), co zapewnia wysoką czytelność struktury.
@@ -71,7 +72,7 @@ System oferuje szereg interaktywnych modułów zasilanych przez bibliotekę HTMX
 ### 1.  Wyszukiwanie, Filtrowanie i Sortowanie
 Błyskawiczna wyszukiwarka przeszukująca nazwy produktów, producentów oraz typy zagrożeń w czasie rzeczywistym.
 <br>
-![Menu sortowania i filtrowania](sciezka/do/filtrowanie.png)
+![Menu sortowania i filtrowania](/docs/images/search_filter.png)
 
 ### 2. Szczegóły Ostrzeżenia
 Wyświetlanie pełnych informacji o wycofanym produkcie (partia, zagrożenie) wraz ze zdjęciami w formie wyskakującego okienka modalnego.
@@ -90,6 +91,13 @@ Dedykowany moduł wyzwalający, który w jednym cyklu odpytuje kanał GIS o najn
 
 ![Email example](/docs/images/email_example.png)
 
+
+### 5. REST API
+Architektura REST API umożliwiająca łatwe pobieranie, filtrowanie i wykorzystywanie ustrukturyzowanych danych o zagrożeniach w innych projektach.
+- [docs/API_documentation.pdf](docs\EatSafe_API_Documentation.pdf)
+<br>
+
+![Email example](/docs/images/api_example.png)
 ---
 <br>
 
@@ -172,7 +180,7 @@ The project solves the real problem of scattered and difficult-to-navigate gover
 </div>
 <br>
 
-![Main EatSafe application screen](/docs/images/app.png)
+![Main EatSafe application screen](/docs/images/app.png) <br>
 *Screenshot showing the main application interface.*
 
 ---
@@ -210,7 +218,7 @@ A relational database has been implemented using **SQLAlchemy** (MySQL support).
 
 <br>
 
-![Database schema](/docs/eatsafe_db.png) <br>
+![Database schema](/docs/images/eatsafe_db_diagram.png) <br>
 *Relational database structure.*
 
 ### 3. Additional Features
@@ -232,7 +240,8 @@ The system offers a range of interactive modules powered by the HTMX library, al
 ### 1.  Search, Filtering, and Sorting
 A lightning-fast search engine that queries product names, manufacturers, and hazard types in real-time.
 <br>
-![Sorting and filtering menu](sciezka/do/filtrowanie.png)
+
+![Sorting and filtering menu](/docs/images/search_filter.png)
 
 ### 2. Warning Details
 Displaying full information about the recalled product (batch, hazard) along with photos in the form of a pop-up modal window.
@@ -251,6 +260,13 @@ A dedicated trigger module that polls the GIS channel for the latest messages in
 
 ![Email example](/docs/images/email_example.png)
 
+
+### 5. REST API
+REST API architecture enabling easy retrieval, filtering, and use of structured threat data in other projects.
+- [docs/API_documentation.pdf](docs\EatSafe_API_Documentation.pdf)
+<br>
+
+![Email example](/docs/images/api_example.png)
 ---
 <br>
 
