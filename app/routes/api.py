@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, abort
 from app.models import db, Subscriber, Warning, Product
 from sqlalchemy.exc import IntegrityError
-from app.utils.validators import is_valid_email
+from app.utils.validators import is_valid_email, validate_and_parse_dates
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -135,13 +135,20 @@ def get_alerts():
 def filter_alerts():
     """
     Handles a GET request that filters alerts based on query parameters.
-    Supports filtering by: danger, brand, product_name.
+    Supports filtering by: danger, brand, product_name, date_from, date_to.
     Multiple filters can be combined in a single request.
     Returns a JSON array of matching warning records.
     """
     danger = request.args.get('danger', '').strip()
     brand = request.args.get('brand', '').strip()
     product_name = request.args.get('product_name', '').strip()
+    date_from_str = request.args.get('date_from', '').strip()
+    date_to_str = request.args.get('date_to', '').strip()
+
+    #dates validation
+    date_from_obj, date_to_obj, error_msg = validate_and_parse_dates(date_from_str, date_to_str)
+    if error_msg:
+        return jsonify({'error': error_msg}), 400
 
     query = Warning.query
 
@@ -150,7 +157,11 @@ def filter_alerts():
     if brand:
         query = query.filter(Warning.brand.ilike(f'%{brand}%'))
     if product_name:
-        query = query.join(Product).filter(Product.product_name.ilike(f'%{product_name}%'))
+        query = query.outerjoin(Product).filter(Product.product_name.ilike(f'%{product_name}%'))
+    if date_from_obj:
+        query = query.filter(Warning.publication_date >= date_from_obj)
+    if date_to_obj:
+        query = query.filter(Warning.publication_date <= date_to_obj)
 
     alerts = query.order_by(Warning.publication_date.desc()).all()
 
