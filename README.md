@@ -37,7 +37,8 @@ Projekt został zaprojektowany tak, aby spełniać wszystkie techniczne i funkcj
 ### 1. Wymagania Podstawowe i Interfejs
 * **Interfejs Użytkownika:** Aplikacja wykorzystuje framework **Flask** do stworzenia responsywnej architektury SPA (Single Page Application), która została opakowana w natywne okno systemowe za pomocą biblioteki `pywebview`. Interfejs umożliwia pełną interakcję: wprowadzanie danych, filtrowanie, wizualizację w formie tabel oraz komunikację za pomocą alertów.
 * **Architektura Obiektowa:** System bazuje na klasach (modele bazy danych SQLAlchemy) oraz dedykowanych funkcjach modułowych.
-* **Obsługa Błędów:** Zaimplementowano bezpieczną walidację danych wejściowych (m.in. weryfikację formatu e-mail) oraz zabezpieczenia przed konfliktami w bazie danych (np. blokowanie prób zapisu duplikatów). Zapytania API posiadają pełną obsługę błędów, zwracając spójne komunikaty oraz odpowiednie kody statusów HTTP
+* **Obsługa Błędów:** Zaimplementowano bezpieczną walidację danych wejściowych (m.in. weryfikację formatu e-mail), system powiadomień o sukcesie lub błedzie akcji w systemie oraz zabezpieczenia przed konfliktami w bazie danych (np. blokowanie prób zapisu duplikatów). Zapytania API posiadają pełną obsługę błędów, zwracając spójne komunikaty oraz odpowiednie kody statusów HTTP
+* **Obsługa plików:** Eksport wybranych ostrzeżeń do pliku csv.
 * **Zewnętrzne Biblioteki:** Wykorzystano m.in. `Flask`, `SQLAlchemy`, `pywebview`, `requests` / narzędzia do parsowania RSS.
 
 ### 2. Baza Danych i Operacje CRUD (Ocena 5.0)
@@ -98,6 +99,15 @@ Architektura REST API umożliwiająca łatwe pobieranie, filtrowanie i wykorzyst
 <br>
 
 ![Email example](/docs/images/api_example.png)
+
+
+### 6. System Powiadomień
+Dedykowany moduł powiadomień, które informują o wystąpieniu błędu lub sukcesie.
+<br>
+
+![Email example](/docs/images/alerts.png)
+
+
 ---
 <br>
 
@@ -206,7 +216,8 @@ The project was designed to meet all technical and functional evaluation criteri
 ### 1. Basic Requirements and Interface
 * **User Interface:** The application uses the **Flask** framework to create a responsive SPA (Single Page Application) architecture, which has been wrapped in a native system window using the `pywebview` library. The interface allows full interaction: data entry, filtering, table-based visualization, and communication via alerts.
 * **Object-Oriented Architecture:** The system is based on classes (SQLAlchemy database models) and dedicated modular functions.
-* **Error Handling:** Secure input data validation has been implemented (e.g., e-mail format verification) alongside database conflict safeguards (e.g., blocking duplicate entry attempts). API requests feature full error handling, returning consistent messages and appropriate HTTP status codes.
+* **Error Handling:** Secure input data validation has been implemented (e.g., e-mail format verification), along with a notification system providing feedback on successful or failed actions, as well as database conflict safeguards (e.g., blocking duplicate entry attempts). API requests feature comprehensive error handling, returning consistent messages and appropriate HTTP status codes.
+* **File support:** Export of selected warnings to a csv file.
 * **External Libraries:** Libraries utilized include `Flask`, `SQLAlchemy`, `pywebview`, and `requests` / RSS parsing tools, among others.
 
 ### 2. Database and CRUD Operations (Grade 5.0)
@@ -267,6 +278,13 @@ REST API architecture enabling easy retrieval, filtering, and use of structured 
 <br>
 
 ![Email example](/docs/images/api_example.png)
+
+
+### 6. Notification System
+Dedicated notification module that informs about an error or success.
+<br>
+
+![Email example](/docs/images/alerts.png)
 ---
 <br>
 
