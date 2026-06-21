@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, abort
+from flask import Blueprint, render_template, request, abort, Response
 from app.models import db, Warning, Product, Subscriber
 from datetime import datetime
 from sync_rss import sync_warnings_to_db
 from app.utils.validators import is_valid_email
 from sqlalchemy import or_, collate
+import csv
+import io
 
 ui_bp = Blueprint('ui', __name__)
 
@@ -28,6 +30,37 @@ def build_sorted_query(sort_param):
     if sort_param in ('product_asc', 'product_desc'):
         return Warning.query.outerjoin(Product).group_by(Warning.wID).order_by(get_sort_clause(sort_param))
     return Warning.query.order_by(get_sort_clause(sort_param))
+
+def generate_warnings_csv(warnings):
+    """
+    Converts a list of Warning objects into a CSV string.
+    Uses ';' as delimiter and a UTF-8 BOM so the file opens correctly in Excel with Polish characters.
+    Products belonging to one warning are joined into a single cell.
+    """
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+
+    # header row
+    writer.writerow(['ID', 'Tytuł', 'Producent', 'Zagrożenie', 'Zalecenia', 'Data komunikatu', 'Produkty', 'Link'])
+
+    for w in warnings:
+        # join all products of a warning into one cell
+        products = '; '.join(
+            f"{p.product_name} (partia: {p.batch})" if p.batch else p.product_name
+            for p in w.products
+        )
+        writer.writerow([
+            w.wID,
+            w.title,
+            w.brand or '',
+            w.danger or '',
+            w.recommendations or '',
+            w.publication_date.strftime('%Y-%m-%d') if w.publication_date else '',
+            products,
+            w.link
+        ])
+
+    return output.getvalue()
 
 @ui_bp.route('/')
 def index():
@@ -147,15 +180,32 @@ def unsubscirbe():
     
 @ui_bp.route('/ui/export', methods=['POST'])
 def export_warnings():
+    """
+    Generates a CSV report from the selected warnings and returns it as a downloadable file.
+    On empty selection or any error, returns a failure toast instead.
+    """
     selected_ids = request.form.getlist('alert_ids')
-    
-    warnings =  Warning.query.filter(Warning.wID.in_(selected_ids)).all()
-    
-    #TD: IMPLEMENTS FUNCIONS WHICH EXPORTS WARNINGS TO CSV/JSON FILE
-    # this commented return is for excpetion while export failure
-    # return render_template('partials/toast_failure.html', notification = {'message': 'Wystąpił błąd przy eksporcie danych'})
-    
-    return render_template('partials/toast_success.html', notification = {'message': 'Poprawnie wyeksportowano zaznaczone dane'})
+
+    try:
+        # nothing selected -> show failure toast
+        if not selected_ids:
+            return render_template('partials/toast_failure.html', notification={'message': 'Nie zaznaczono żadnych ostrzeżeń do eksportu'})
+
+        warnings = Warning.query.filter(Warning.wID.in_(selected_ids)).all()
+
+        csv_data = generate_warnings_csv(warnings)
+        filename = f"eatsafe_raport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+        # return CSV as a downloadable file (intercepted client-side by HTMX)
+        return Response(
+            csv_data,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+
+    except Exception:
+        # any failure during generation -> show failure toast
+        return render_template('partials/toast_failure.html', notification={'message': 'Wystąpił błąd przy eksporcie danych'})
 
 @ui_bp.route('/ui/warning/<int:warning_id>')
 def get_warining_details(warning_id):

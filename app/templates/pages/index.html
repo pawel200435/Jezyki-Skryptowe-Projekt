@@ -263,6 +263,58 @@
             }
         });
 
+        // Intercept CSV export responses: download the file instead of swapping it into the DOM.
+        // (HTMX would otherwise dump the file content into #toastPlacement.)
+        document.body.addEventListener('htmx:beforeSwap', function(evt) {
+            let xhr = evt.detail.xhr;
+            let contentType = xhr.getResponseHeader('Content-Type') || '';
+
+            if (contentType.indexOf('text/csv') !== -1) {
+                // It's a file -> stop HTMX from swapping it
+                evt.detail.shouldSwap = false;
+
+                // Build a downloadable blob from the response text
+                let blob = new Blob(['\ufeff' + xhr.response], {type: 'text/csv;charset=utf-8'});
+                let url = URL.createObjectURL(blob);
+
+                // Read filename from the Content-Disposition header
+                let disposition = xhr.getResponseHeader('Content-Disposition') || '';
+                let match = disposition.match(/filename=(.+)$/);
+                let filename = match ? match[1].trim() : 'raport.csv';
+
+                // Trigger the browser download
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Show success toast (same styling as partials/toast_success.html)
+                showExportToast('Poprawnie wyeksportowano zaznaczone dane', 'green');
+            }
+            // otherwise it's the failure toast HTML -> let HTMX swap it normally
+        });
+
+        // Builds and shows a toast, mirroring the markup of partials/toast_success.html
+        function showExportToast(message, color) {
+            let bg = (color === 'green') ? 'background-green' : 'background-red';
+            let wrapper = document.createElement('div');
+            wrapper.innerHTML =
+                '<div class="toast toast-initialized align-items-center ' + bg + '" role="alert" aria-live="assertive" aria-atomic="true">' +
+                    '<div class="d-flex">' +
+                        '<div class="toast-body fw-bold">' + message + '</div>' +
+                        '<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                    '</div>' +
+                '</div>';
+            let toastEl = wrapper.firstChild;
+            document.getElementById('toastPlacement').appendChild(toastEl);
+            let toast = new bootstrap.Toast(toastEl, {delay: 10000});
+            toast.show();
+            toastEl.addEventListener('hidden.bs.toast', function() { toastEl.remove(); });
+        }
+
         // GLOBAL EVENTS BY HTMX
         document.body.addEventListener("htmx:afterSwap", function(event) {
             // GIS refresh reloads data as date_desc -> reset sort source of truth
