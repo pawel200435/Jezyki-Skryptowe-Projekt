@@ -30,7 +30,7 @@ def extract(html_content):
             elif ("partii" in col or "partia" in col or "trwałości" in col or "partie" in col or "ean" in col) and (batchIdx == -1):
                 batchIdx = i
 
-            elif "produkt" in col or "nazwa" in col:
+            elif ("produkt" in col or "nazwa" in col or "produktu" in col) and "numer" not in col:
                 productIdx = i
         # we remember the product's name so in case of
         # a few different batches share the same name
@@ -116,19 +116,29 @@ def extract(html_content):
         if txt:
             # getting text from strong
             val=strong.get_text(separator=" | ", strip=True)
+            if prev_text and ":" in prev_text:
+                txt=prev_text.strip().lower()
             # colon in val means that the person in GIS made an input mistake
-            if ":" in val:
+            elif ":" in val:
                 parts = val.split(":", 1)
-                txt = parts[0].strip().lower()
-                val = parts[1].strip()
+                if len(parts[0])<30:
+                    txt = parts[0].strip().lower()
+                    val = parts[1].strip()
+                else:
+                    txt=prev_text.strip().lower() if prev_text else ""
+            else:
+                txt=prev_text.strip().lower() if prev_text else ""
             if len(txt)>60:
                 txt=""
 
+            # print(txt)
             # logical checks, for categorizing
-            if "referencyjny" in txt or "partii" in txt or "partia" in txt or "partie" in txt or "ean" in txt or (("trwałości" in txt or "kreskowy" in txt) and result["product"]):
+            if "numer" in txt or "partii" in txt or "partia" in txt or "partie" in txt or "ean" in txt or "referencyjny" in txt or  (("kod" in txt or "trwałości" in txt or "kreskowy" in txt) and not result["product"]):
+                # print("Batch")
                 prod_batch = val
 
-            elif "produkt" in txt or "nazwa" in txt or "produktu" in txt:
+            elif ("produkt" in txt or "nazwa" in txt or "produktu" in txt) and "numer" not in txt:
+                # print("Nazwa")
                 prod_name = val
 
             elif "firmy" in txt or "firma" in txt or "marka" in txt or "dystrybutor" in txt:
@@ -203,7 +213,7 @@ def extract(html_content):
     if not result['brand'] or not result['product']:
         lines=soup.get_text(separator="\n", strip=True).split("\n")
         product_name, batch_nr="",""
-        for line in lines:
+        for i, line in enumerate(lines):
             line_low=line.lower()
             parts=line_low.split(":", 1)
 
@@ -216,6 +226,24 @@ def extract(html_content):
                 if len(label) > 60:
                     continue
 
+                is_valid_label = any(k in label for k in [
+                    "firm", "mark", "dystrybutor", "producent", "wyprodukowano",
+                    "parti", "trwał", "kreskow", "termin", "ean", "artykuł", "kod",
+                    "produkt", "nazw"
+                ])
+
+
+                if is_valid_label and not value:
+                    for j in range(i + 1, min(i + 4, len(lines))):
+                        next_line = lines[j].strip()
+                        if next_line and next_line != ":":
+                            value = next_line
+                            break
+
+                if not value:
+                    continue
+
+
                 # we look for brands if it's still empty
                 if not result['brand'] and any(
                         word in label for word in ["firmy", "firma", "marka", "dystrybutor", "producent", "wyprodukowano"]):
@@ -223,13 +251,14 @@ def extract(html_content):
 
                 # we look for product if we still don't have any
                 if not result['product']:
+
+                    # if we have both name and batch we can clear the batch allowing different batches to share same name
                     if any(word in label for word in
                            ["partii", "partia", "trwałości", "partie", "kreskowy", "termin", "ean", "artykułu", "kod"]):
                         batch_nr = value
-                    elif any(word in label for word in ["produkt", "nazwa", "produktu"]):
+                    elif any(word in label for word in ["produkt", "nazwa", "produktu"]) and not "numer" in label:
                         product_name = value
 
-                    # if we have both name and batch we can clear the batch allowing different batches to share same name
                     if product_name and batch_nr:
                         result['product'].add((product_name, batch_nr))
                         batch_nr = ""
@@ -302,3 +331,8 @@ def check_missing(data):
         else:
             print("all data extracted successfully")
         print("=================================================\n\n")
+
+if __name__ == "__main__":
+    f=open("test.txt", "r", encoding="utf-8")
+    html = f.read()
+    print(extract(html)['product'])
