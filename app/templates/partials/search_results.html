@@ -24,28 +24,43 @@
     {% endif %}
 
     <script>
-        document.body.addEventListener('change', function(event) {
-        
+        const main = () => {
+            prepareDOMEvents()
+        }
+
+        const prepareDOMEvents = () => {
+            document.body.addEventListener('change', manageCheckboxesState)
+        }
+
+        const manageCheckboxesState = (e) => {
             // check/uncheck all
-            if (event.target.id === 'selectAllCheckboxes') {
-                const isChecked = event.target.checked;
-                const checkboxes = document.querySelectorAll('.alert-checkbox');
-                
-                checkboxes.forEach(el => {
-                    el.checked = isChecked;
-                });
+            if (e.target.id === 'selectAllCheckboxes') {
+                switchAllCheckboxes(e.target.checked)
             }
-            
+
             // if user uncheck one element the th checkbox need to be uncheck too 
-            if (event.target.classList.contains('alert-checkbox')) {
-                const allCheckboxes = document.querySelectorAll('.alert-checkbox');
-                const allChecked = Array.from(allCheckboxes).every(el => el.checked);
-                
-                const selectAllCb = document.getElementById('selectAllCheckboxes');
-                if (selectAllCb) {
-                    selectAllCb.checked = allChecked;
-                }
+            if (e.target.classList.contains('alert-checkbox')) {
+                updateMainCheckboxState()
             }
-        });
+        }
+
+        const switchAllCheckboxes = (mainCheckboxState) => {
+            const checkboxes = document.querySelectorAll('.alert-checkbox');
+            checkboxes.forEach(el => {
+                    el.checked = mainCheckboxState;
+                })
+        } 
+
+        const updateMainCheckboxState  = () => {
+            const checkboxes = document.querySelectorAll('.alert-checkbox');
+            const mainCheckbox = document.querySelector('#selectAllCheckboxes');
+
+            if (mainCheckbox) {
+                const allChecked = [...checkboxes].every(el => el.checked);
+                mainCheckbox.checked = allChecked;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', main)
     </script>
 </div>
