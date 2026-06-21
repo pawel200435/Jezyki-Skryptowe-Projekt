@@ -118,8 +118,8 @@ Jeśli chcesz wypróbowac system wysyłki maili potrzeba jeszcze danych autoryza
 6. Zainstaluj wymagane pakiety komendą: uv pip install -r requirements.txt
 7. Wygeneruj tabele w bazie danych, uruchamiając skrypt: 
    python create_db.py
-8. Załaduj wstępne dane RSS do bazy danych, uruchamiając:
-   python sync_rss.py
+8. Załaduj dane GOV do bazy danych, uruchamiając:
+   python sync_gov.py
 9. Aby przetestować system mailowy, uruchom skrypt synchronizacji powiadomień:
    python run_sync_and_notify.py
 ```
@@ -287,8 +287,8 @@ If you want to test the email delivery system, you will also need email authoriz
 6. Install the required packages with the command: uv pip install -r requirements.txt
 7. Generate tables in the database by running the script: 
    python create_db.py
-8. Load initial RSS data into the database by running:
-   python sync_rss.py
+8. Load GOV data into the database by running:
+   python sync_gov.py
 9. To test the email system, run the notification synchronization script:
    python run_sync_and_notify.py
 ```
