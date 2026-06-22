@@ -1,7 +1,50 @@
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
+# base for images
+URL_BASE = "https://www.gov.pl"
+# keyword dictionaries
+# for batches and brands we have two kinds of keywords dictionaries
+# primary - those are the desirable ones
+# secondary - if we didn't find any primary kws, secondary ones will do better than nothing
+KW_BATCH_PRIMARY = ("partii", "partia", "partie", "numer", "ean", "referencyjny", "artykułu", "artykuł")
+KW_BATCH_SECONDARY = ("kod", "kreskowy", "trwałości", "termin")
+KW_BATCH_ALL = KW_BATCH_PRIMARY + KW_BATCH_SECONDARY
+
+KW_PRODUCT = ("produkt", "nazwa", "produktu")
+
+KW_BRAND_PRIMARY = ("firmy", "firma", "marka", "producent", "wyprodukowano")
+KW_BRAND_SECONDARY = ("dystrybutor", "pakowano", "importer")
+KW_BRAND_ALL = KW_BRAND_PRIMARY + KW_BRAND_SECONDARY
+
+# those are words, that will be ignored
+KW_IGNORE = (
+    "szczegóły", "identyfikacja", "zdjęcia", "wycofywanych",
+    "zalecenia dla konsumentów", "działania podjęte", "zagrożenie",
+    "organy urzędowej", "oraz"
+)
+
+# strict product labels, used in part 3 of extract function
+# they are used in the process of "gathering" batches
+STRICT_PRODUCT_LABELS = {"nazwa produktu", "nazwa", "produkt", "nazwa produktu/ odmiana"}
+STRICT_BATCH_LABELS = {
+    "numer partii", "nr partii", "partia", "partie", "numery partii",
+    "kod ean", "ean", "kod kreskowy", "numer serii", "nr serii",
+    "artykuł", "nr artykułu", "numer artykułu", "data minimalnej trwałości", "termin przydatności"
+}
+STRICT_BRAND_LABELS = {"marka", "firma", "producent", "dystrybutor", "wyprodukowano dla", "importer"}
+
+
+def format_img_src(src):
+    # support function for cleaning img src
+    if not src or "data:image/" in src:
+        return "no image"
+    else:
+        if src.startswith("/photo/"):
+            return URL_BASE + src
+        return src
+
 
 def extract(html_content):
-    URL_BASE = "https://www.gov.pl"
+
     result={
         'danger': "",
         'product' : set(),
@@ -14,93 +57,87 @@ def extract(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     # first part - lets check if there is a table containing product names and batch codes
     table=soup.find('table')
-
     if table:
         rows=table.find_all("tr")
-        # we iterate the first row in hopes of finding the descriptions, which index contains what
-        cols_raw=rows[0].find_all(["td", "th"])
-        cols = [col.get_text(strip=True) for col in cols_raw]
-        imgIdx, batchIdx, productIdx = -1, -1, -1
-        for i, col_text in enumerate(cols):
-            col = col_text.lower()
-            # checking for product name, batch and photos
-            if "zdjęcie" in col or "zdjęcia" in col:
-                imgIdx = i
 
-            elif ("partii" in col or "partia" in col or "trwałości" in col or "partie" in col or "ean" in col) and (batchIdx == -1):
-                batchIdx = i
+        if rows:
+            # we iterate the first row in hopes of finding the descriptions, which index contains what
+            cols_raw=rows[0].find_all(["td", "th"])
+            cols = [col.get_text(strip=True).lower() for col in cols_raw]
+            img_idx, batch_idx, product_idx = -1, -1, -1
 
-            elif ("produkt" in col or "nazwa" in col or "produktu" in col) and "numer" not in col:
-                productIdx = i
-        # we remember the product's name so in case of
-        # a few different batches share the same name
-        # we can add them as separate products
-        current_table_prod = ""
-        # now we iterate on the remaining rows
-        for row in rows[1:]:
-            if row.find("th"):
-                continue
-            cells_raw = row.find_all("td")
-            # search for <img> blocks within these cols
-            if imgIdx != -1 and imgIdx < len(cells_raw):
-                cell=cells_raw[imgIdx]
-                imgs=cell.find_all("img", src=True)
-                if imgs:
-                    # create a tuple of a description and src
-                    # this list comprehension allows us to analyze few different pictures in the same cell
-                    img_final = {
-                        (
-                            tag.get('alt', ""),
-                            "No Image" if "data:image" in tag.get('src', "")
-                            else URL_BASE + tag.get('src', "") if tag.get('src', "").startswith("/photo/")
-                            else tag.get('src', "")
-                        )
-                        for tag in imgs
-                    }# add newly found images to result
-                    result['images'].update(img_final)
+            for i, col_text in enumerate(cols):
+                col = col_text.lower()
+                # checking for product name, batch and photos
+                if "zdjęci" in col:
+                    img_idx = i
 
-            if len(cells_raw) > 0:
-                # extracting text from cells
-                cells = [cell.get_text(strip=True) for cell in cells_raw]
-                prod_batch = ""
+                elif batch_idx == -1 and any(k in col for k in KW_BATCH_ALL):
+                    batch_idx = i
 
-                # we need to calculate an offset - sometimes the columns dont have the same
-                # amounts of cells, fe 1 product name on the left and 4 different serial numbers on the right
-                expected_cols = len(cols)
-                actual_cols = len(cells)
-                offset = expected_cols - actual_cols
+                elif product_idx == -1 and any(k in col for k in KW_PRODUCT) and "numer" not in col:
+                    if not batch_idx == i:
+                        product_idx = i
 
-                # we try to assess the product's name
-                local_prod_idx = productIdx - offset
-                if 0 <= local_prod_idx < actual_cols:
-                    name_text = cells[local_prod_idx]
-                    # we update the name only if its not empty
-                    if name_text:
-                        current_table_prod = name_text
+            # we remember the product's name so in case of
+            # a few different batches share the same name
+            # we can add them as separate products
+            current_table_prod = ""
 
-                # we try to get the batch number minding the offset
-                local_batch_idx = batchIdx - offset
-                if 0 <= local_batch_idx < actual_cols:
-                    prod_batch = cells[local_batch_idx]
+            # now we iterate on the remaining rows
+            for row in rows[1:]:
+                if row.find("th"):
+                    continue
 
-                # we save the product data using current name and batch code
-                if current_table_prod and prod_batch:
-                    result['product'].add((current_table_prod, prod_batch))
+                cells_raw = row.find_all("td")
+
+                # search for <img> blocks within these cols
+                if img_idx != -1 and img_idx < len(cells_raw):
+                    cell=cells_raw[img_idx]
+                    imgs=cell.find_all("img", src=True)
+                    if imgs:
+                        # create a tuple of a description and src
+                        img_final = {
+                            (tag.get('alt', ""),format_img_src(tag.get('src', "")))for tag in imgs
+                        }
+                        # add newly found images to result
+                        result['images'].update(img_final)
+
+                if cells_raw:
+                    # extracting text from cells
+                    cells = [cell.get_text(strip=True) for cell in cells_raw]
+                    prod_batch = ""
+                    # we need to calculate an offset - sometimes the columns dont have the same
+                    # amounts of cells, fe 1 product name on the left and 4 different serial numbers on the right
+                    offset = len(cols) - len(cells)
+
+                    # we try to assess the product's name
+                    local_prod_idx = product_idx - offset
+                    if 0 <= local_prod_idx < len(cells) and cells[local_prod_idx]:
+                        current_table_prod = cells[local_prod_idx]
+
+                    # we try to get the batch number minding the offset
+                    local_batch_idx = batch_idx - offset
+                    if 0 <= local_batch_idx < len(cells):
+                        prod_batch = cells[local_batch_idx]
+
+                    # we save the product data using current name and batch code
+                    if current_table_prod and prod_batch:
+                        result['product'].add((current_table_prod, prod_batch))
 
 
 
     # second part - the interesting data is usually in <strong> blocks
     prod_name, prod_batch = "", ""
     for strong in soup.find_all("strong"):
+        # skip if currently in table, parsed before
         if strong.find_parent("table"):
             continue
 
+        # list item logic
         if strong.parent and strong.parent.name == "li":
             parent_list = strong.find_parent(["ul", "ol"])
-            if parent_list:
-                prev_text = parent_list.find_previous(string=True)
-            else:
-                prev_text = strong.find_previous(string=True)
+            prev_text = parent_list.find_previous(string=True) if parent_list else strong.find_previous(string=True)
         else:
             # we search for immediate text neighbor of label <strong>
             prev_text = strong.find_previous(string=True)
@@ -109,43 +146,45 @@ def extract(html_content):
         while prev_text and not prev_text.strip():
             prev_text = prev_text.find_previous(string=True)
 
+        # label and value
         txt = ""
-        if prev_text:
-            txt = prev_text.strip().lower()
+        val = strong.get_text(separator=" | ", strip=True)
+
+        # colon logic
+        # if colon in prev_text, then prev_text is a label
+        if prev_text and ":" in prev_text:
+            txt=prev_text.strip().lower()
+        # if colon in val then it's a formating mistake
+        # or label is also bolded
+        elif ":" in val:
+            # split into two
+            parts = val.split(":", 1)
+            # if the label is lower than 30 sgns
+            # then it's probably correct
+            if len(parts[0])<30:
+                txt=parts[0].strip().lower()
+                val=parts[1].strip()
+            else:
+                # the label is in previous line
+                txt=prev_text.strip().lower() if prev_text else ""
+        else:
+            txt = prev_text.strip().lower() if prev_text else ""
+
+        # check for ignored keywords in current label
+        if len(txt) > 60 or any(bad in txt for bad in KW_IGNORE):
+            txt = ""
 
         if txt:
-            # getting text from strong
-            val=strong.get_text(separator=" | ", strip=True)
-            if prev_text and ":" in prev_text:
-                txt=prev_text.strip().lower()
-            # colon in val means that the person in GIS made an input mistake
-            elif ":" in val:
-                parts = val.split(":", 1)
-                if len(parts[0])<30:
-                    txt = parts[0].strip().lower()
-                    val = parts[1].strip()
-                else:
-                    txt=prev_text.strip().lower() if prev_text else ""
-            else:
-                txt=prev_text.strip().lower() if prev_text else ""
-            if len(txt)>60:
-                txt=""
-
-            # print(txt)
             # logical checks, for categorizing
-            if "numer" in txt or "partii" in txt or "partia" in txt or "partie" in txt or "ean" in txt or "referencyjny" in txt or  (("kod" in txt or "trwałości" in txt or "kreskowy" in txt) and not result["product"]):
-                # print("Batch")
+            if any(k in txt for k in KW_BATCH_PRIMARY) or (any(k in txt for k in KW_BATCH_SECONDARY) and not result["product"]):
                 prod_batch = val
 
-            elif ("produkt" in txt or "nazwa" in txt or "produktu" in txt) and "numer" not in txt:
-                # print("Nazwa")
+            elif any(k in txt for k in KW_PRODUCT) and "numer" not in txt:
                 prod_name = val
 
-            elif "firmy" in txt or "firma" in txt or "marka" in txt or "dystrybutor" in txt:
+            elif any(k in txt for k in KW_BRAND_PRIMARY) or (any(k in txt for k in KW_BRAND_SECONDARY) and not result["brand"]):
                 result['brand']=val
 
-            elif not result['brand'] and ("producent" in txt or "wyprodukowano" in txt or "pakowano" in txt or "importer" in txt):
-                result['brand']=val
         # appending product lists - sometimes one warning contains more than one product
         if prod_name and prod_batch:
             result["product"].add((prod_name,prod_batch))
@@ -163,37 +202,22 @@ def extract(html_content):
 
     # we separate the gallery section to extract image links
     gallery_section = soup.find("div", class_="gallery")
-
     if gallery_section:
         images = gallery_section.find_all("img", src=True)
         # a set of tuples, first argument being imgs description, and second one being the link
-        # also small check - GIS always includes their graphic, and it always ends in 1920x810
-        img_urls={
-            (
-                tag.get('alt', ""),
-                "No Image" if "data:image/png" in tag['src'] else
-                URL_BASE + tag['src'] if tag['src'].startswith("/photo/") else
-                tag['src']
-            )
-            for tag in images
-        }
+        img_urls={(tag.get('alt', ""), format_img_src(tag['src'])) for tag in images }
         result['images'].update(img_urls)
         # we can destroy this section since we've already extracted our urls
         gallery_section.decompose()
 
     # if we didn't find any images, we have to take anything the article has to offer
     if not result.get('images'):
-        images=soup.find("article").find_all("img", src=True)
-        img_urls={
-            (
-                tag.get('alt', ""),
-                "No Image" if "data:image/png" in tag['src'] else
-                URL_BASE + tag['src'] if tag['src'].startswith("/photo/") else
-                tag['src']
-            )
-            for tag in images
-        }
-        result['images'].update(img_urls)
+        article=soup.find("article")
+        if article:
+            img=article.find_all("img", src=True)
+            img_urls={(tag.get('alt', ""), format_img_src(tag['src'])) for tag in img}
+            result['images'].update(img_urls)
+
     # There is always a small header telling the reader how many photos are there in the gallery
     # We must get rid of it
     photos_header = soup.find("h3", string=lambda t: t and "Zdjęcia" in t)
@@ -206,62 +230,99 @@ def extract(html_content):
 
     # clearing the html
     cleared_html = soup.get_text(separator="\n", strip=True)
-
     result['cleared_html'] = cleared_html
-    # part 3 - if we still didn't find any brands or products,
-    # we need to look for them in plaintext
-    if not result['brand'] or not result['product']:
-        lines=soup.get_text(separator="\n", strip=True).split("\n")
-        product_name, batch_nr="",""
-        for i, line in enumerate(lines):
-            line_low=line.lower()
-            parts=line_low.split(":", 1)
-
-            if len(parts) > 1:
-                # label is on the left of the colon
-                # value is on the right
-                label = parts[0].lower()
-                value = parts[1].strip()
-
-                if len(label) > 60:
-                    continue
-
-                is_valid_label = any(k in label for k in [
-                    "firm", "mark", "dystrybutor", "producent", "wyprodukowano",
-                    "parti", "trwał", "kreskow", "termin", "ean", "artykuł", "kod",
-                    "produkt", "nazw"
-                ])
 
 
-                if is_valid_label and not value:
-                    for j in range(i + 1, min(i + 4, len(lines))):
-                        next_line = lines[j].strip()
-                        if next_line and next_line != ":":
-                            value = next_line
-                            break
+    # part 3 - plain text check, used when no <strong> labels found,
 
-                if not value:
-                    continue
+    # split html into lines
+    lines=cleared_html.split("\n")
+    current_product_name=""
+    gathering_batches=False
 
 
-                # we look for brands if it's still empty
-                if not result['brand'] and any(
-                        word in label for word in ["firmy", "firma", "marka", "dystrybutor", "producent", "wyprodukowano"]):
-                    result['brand'] = value
+    for i, line in enumerate(lines):
+        line_clean = line.strip()
+        # if current line is empty we stop gathering batches
+        if not line_clean:
+            gathering_batches = False
+            continue
 
-                # we look for product if we still don't have any
-                if not result['product']:
+        # get rid of unnecessary list symbols in value
+        clean_val = line_clean.lstrip("•-*▪ ").strip()
+        # if we found any of the ignored keywords in value, we've must have hit regular article content,\
+        # stop gathering
+        if any(bad in clean_val.lower() for bad in KW_IGNORE):
+            gathering_batches = False
+            continue
 
-                    # if we have both name and batch we can clear the batch allowing different batches to share same name
-                    if any(word in label for word in
-                           ["partii", "partia", "trwałości", "partie", "kreskowy", "termin", "ean", "artykułu", "kod"]):
-                        batch_nr = value
-                    elif any(word in label for word in ["produkt", "nazwa", "produktu"]) and not "numer" in label:
-                        product_name = value
+        # split around the colon
+        parts = line_clean.split(":", 1)
 
-                    if product_name and batch_nr:
-                        result['product'].add((product_name, batch_nr))
-                        batch_nr = ""
+        # checking for irregularities in first part
+        if len(parts) < 2 or len(parts[0])>60:
+            # if currently gathering and found sth interesting, add it to result else stop gahtering
+            if gathering_batches and clean_val and current_product_name:
+                if len(clean_val) < 30:
+                    result['product'].add((current_product_name, clean_val))
+                else:
+                    gathering_batches = False
+            continue
+
+        raw_label = parts[0].lower().strip()
+        value = parts[1].strip()
+        # clean the label of numbering
+        label = raw_label.lstrip("0123456789.- ")
+
+        # again ignore keywords from the label
+        if len(label) > 60 or any(bad in label for bad in KW_IGNORE):
+            continue
+
+        # check for exact labels
+        is_product_label = label in STRICT_PRODUCT_LABELS
+        is_batch_label = label in STRICT_BATCH_LABELS
+        is_brand_label = label in STRICT_BRAND_LABELS
+
+
+        if not (is_product_label or is_batch_label or is_brand_label):
+            gathering_batches = False
+            continue
+
+        gathering_batches = False
+
+        # lookahead logic
+        # sometimes the data for our label is hidden few lines lower
+        if not value:
+            # look in 5 next lines
+            for j in range(i+1, min(i+4, len(lines))):
+                next_line = lines[j].strip()
+                if next_line and next_line != ":":
+                    if ":" in next_line and len(next_line.split(":", 1)[0]) <= 60:
+                        break
+                # if there is a valid value in next line then clean it and save it
+                value = next_line.lstrip("•-*▪ ").strip()
+                break
+
+        # if didn't find anything just skip
+        if not value:
+            continue
+
+        # we look for brands if it's still empty
+        if not result['brand'] and is_brand_label:
+            result['brand'] = value
+
+
+
+        if is_product_label:
+            current_product_name = value
+
+        elif is_batch_label:
+            gathering_batches = True
+            batch_nr = value
+            # if we have a name and a batch, then just save it
+            if current_product_name:
+                result['product'].add((current_product_name, batch_nr))
+
     return result
 
 

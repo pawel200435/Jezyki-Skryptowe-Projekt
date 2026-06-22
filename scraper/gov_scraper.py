@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-import time
 from datetime import datetime
 from scraper import extractor
 from fake_useragent import UserAgent
@@ -28,7 +27,8 @@ def scrape_gov_data(url="https://www.gov.pl/web/gis/ostrzezenia"):
 
     result=[]
 
-    # load only the first 15 pages.
+    # load only the first 14 pages.
+    # if you want to access further articles switch 15 for pg_count+1
     for i in range(1, 15):
         # print(f"processing page {i}/{pg_count}")
         page_url=url if i==1 else f"{url}?page={i}"
@@ -118,7 +118,7 @@ def get_raw_html(art_url):
 
 
 if __name__ == "__main__":
-    # extractor.check_missing(scrape_gov_data())
-    for d in scrape_gov_data():
-        print(d["title"])
-        print(d["product"])
+    extractor.check_missing(scrape_gov_data())
+    # for d in scrape_gov_data():
+    #     print(d["title"])
+    #     print(d["product"])
